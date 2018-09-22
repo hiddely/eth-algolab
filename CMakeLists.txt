@@ -25,6 +25,8 @@ endif()
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(algolab main.cpp practice/even_pairs/main.cpp)
+add_executable(algolab main.cpp week1/even_pairs/main.cpp week1/build_the_sum/main.cpp week1/dominoes/main.cpp)
 add_executable(strings practice/strings/main.cpp)
-add_executable(even_pairs practice/even_pairs/main.cpp)
+add_executable(even_pairs week1/even_pairs/main.cpp)
+add_executable(build_the_sum week1/build_the_sum/main.cpp)
+add_executable(dominoes week1/dominoes/main.cpp)
