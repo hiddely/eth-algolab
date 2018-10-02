@@ -3,9 +3,25 @@
 //
 
 #include <iostream>
-#include <string>
 #include <vector>
-#include <boost/math/special_functions/binomial.hpp>
+
+//long double factorial(unsigned int n) {
+//    if (n == 0) {
+//        return 1;
+//    }
+//    return ((long double)n) * factorial(n - 1);
+//}
+//
+//long double binomial_coefficient(int n, int k) {
+//    return factorial(n) / (factorial(k) * factorial(n - k));
+//}
+// Actually, we can optimize the above, since k is always two.
+
+// Assume that n > 2
+int binomial_coefficient_pick_two(int n) {
+//    assert(n > 2);
+    return n * (n - 1) / 2;
+}
 
 void testcase() {
     int n; std::cin >> n;
@@ -29,15 +45,15 @@ void testcase() {
             odd++;
         }
     }
-    double binEven = even / 2;
-    double binOdd = odd / 2;
+    int binEven = even / 2;
+    int binOdd = odd / 2;
     if (even > 2) {
-        binEven = boost::math::binomial_coefficient<double>((unsigned int)even, 2);
+        binEven = binomial_coefficient_pick_two(even);
     }
     if (odd > 2) {
-        binOdd = boost::math::binomial_coefficient<double>((unsigned int)odd, 2);
+        binOdd = binomial_coefficient_pick_two(odd);
     }
-    int res = ((int)binEven) + ((int)binOdd) + even;
+    int res = binEven + binOdd + even;
     std::cout << res << std::endl;
 }
 
