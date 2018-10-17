@@ -4,25 +4,17 @@
 
 #include <iostream>
 #include <vector>
-#include <map>
 #include <limits>
 #include <algorithm>
 #include <iomanip>
 #include <utility>
 
-struct CoolInt {
-    double val;
-
-    CoolInt(double val) : val(val) {}
-
-    CoolInt() { val = -1; }
-};
-
-std::map<std::pair<int,int>, CoolInt> lookup;
+std::vector<std::vector<double>> lookup;
 std::vector<double> probabilities;
 int days;
+int target;
 
-double prob(int start, int target, int index) {
+double prob(int start, int index) {
     if (start >= target) {
         return 1;
     }
@@ -32,46 +24,44 @@ double prob(int start, int target, int index) {
     if (index == days) {
         return 0; // Too slow
     }
-    if (lookup[std::make_pair(start,index)].val != -1) {
-        return lookup[std::make_pair(start,index)].val;
+    if (lookup[index][start] != -1) {
+        return lookup[index][start];
     }
     double max = 0;
     double p = probabilities[index];
     for (int i = 0; i <= start; i++) {
-        double win = p * prob(start + i, target, index + 1);
-        if (win == 0) {
-            continue;
-        }
-        double lose = (1 - p) * prob(start - i, target, index + 1);
+        double win = p * prob(start + i, index + 1);
+        double lose = (1 - p) * prob(start - i, index + 1);
         double result = win + lose;
         if (result > max) {
             max = result;
         }
     }
-    lookup[std::make_pair(start,index)] = CoolInt(max);
+    lookup[index][start] = max;
     return max;
 }
 
 void testcase() {
-    lookup.clear();
     std::cin >> days;
     int start; std::cin >> start;
-    int target; std::cin >> target;
+    std::cin >> target;
 
     probabilities = std::vector<double>(days);
     for (int i = 0; i < days; i++) {
         std::cin >> probabilities[i];
     }
 
-    double p = prob(start, target, 0);
+    lookup = std::vector<std::vector<double>>(days, std::vector<double>(target, -1));
 
-    std :: cout << std :: fixed << std::setprecision (5);
+    double p = prob(start, 0);
+
     std::cout << p << std::endl; // Replace 3.5 with your desired double
 
 }
 
 int main() {
     std::ios_base::sync_with_stdio(false);
+    std :: cout << std :: fixed << std::setprecision (5);
     int t; std::cin >> t;
     for (int i = 0; i < t; i++) {
         testcase();

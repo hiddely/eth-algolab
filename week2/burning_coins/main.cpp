@@ -14,7 +14,8 @@ struct CoolInt {
     CoolInt() { val = -1; }
 };
 
-std::map<std::pair<int, int>, CoolInt> lookup;
+//std::map<std::pair<int, int>, CoolInt> lookup;
+std::vector<std::vector<int>> lookupTable;
 std::vector<int> coins;
 
 
@@ -22,11 +23,12 @@ int f(int a, int b) {
     if (a == b) {
         return coins[a];
     }
+//    if ()
     if (a + 1 == b) {
         return std::max(coins[a], coins[b]);
     }
-    if (lookup[std::pair<int, int>(a, b)].val != -1) {
-        return lookup[std::pair<int, int>(a, b)].val;
+    if (lookupTable[a][b] != -1) {
+        return lookupTable[a][b];
     }
     int leftFriendPicksLeft = coins[a] + f(a + 2, b);
     int leftFriendPicksRight = coins[a] + f(a + 1, b - 1);
@@ -35,17 +37,17 @@ int f(int a, int b) {
     int left = std::min(leftFriendPicksLeft, leftFriendPicksRight);
     int right = std::min(rightFriendPicksLeft, rightFriendPicksRight);
     int max = std::max(left, right);
-    lookup[std::pair<int, int>(a, b)] = CoolInt(max);
+    lookupTable[a][b] = max;
     return max;
 }
 
 void testcase() {
-    lookup.clear();
     int n; std::cin >> n;
     coins = std::vector<int>(n);
     for (int i = 0; i < n; i++) {
         std::cin >> coins[i];
     }
+    lookupTable = std::vector<std::vector<int>>(n, std::vector<int>(n, -1));
 
     std::cout << f(0, n - 1) << std::endl;
 }

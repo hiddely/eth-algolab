@@ -4,6 +4,8 @@ project(algolab)
 message(STATUS "start running cmake...")
 
 find_package(Boost 1.67.0 COMPONENTS system filesystem REQUIRED)
+find_package(CGAL QUIET COMPONENTS Core )
+include(${CGAL_USE_FILE})
 
 if(Boost_FOUND)
 
@@ -15,17 +17,29 @@ if(Boost_FOUND)
 
 endif()
 
-add_executable(BoostTest main.cpp)
+if ( CGAL_FOUND )
+
+    include( ${CGAL_USE_FILE} )
+
+#    include( CGAL_CreateSingleSourceCGALProgram )
+
+else()
+
+    message(STATUS "This program requires the CGAL library, and will not be compiled.")
+
+endif()
+
+add_executable(graphs week4/graphs/main.cpp)
 
 if(Boost_FOUND)
 
-    target_link_libraries(BoostTest ${Boost_LIBRARIES})
+    target_link_libraries(graphs ${Boost_LIBRARIES})
 
 endif()
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(algolab main.cpp week1/even_pairs/main.cpp week1/build_the_sum/main.cpp week1/dominoes/main.cpp week1/even_matrices/main.cpp week1/potw/main.cpp)
+add_executable(algolab main.cpp)
 add_executable(strings practice/strings/main.cpp)
 add_executable(even_pairs week1/even_pairs/main.cpp)
 add_executable(build_the_sum week1/build_the_sum/main.cpp)
@@ -36,3 +50,10 @@ add_executable(search_snippets week2/search_snippets/main.cpp)
 add_executable(beach_bars week2/beach_bars/main.cpp)
 add_executable(week2potw week2/potw/main.cpp)
 add_executable(burning_coins week2/burning_coins/main.cpp)
+add_executable(great_game week2/great_game/main.cpp)
+add_executable(luigi_gg week2/great_game/lol.cpp)
+add_executable(hit week3/hit/main.cpp)
+add_executable(firsthit week3/firsthit/main.cpp)
+add_executable(antenna week3/antenna/main.cpp)
+add_executable(almost_antenna week3/almost-antenna/main.cpp)
+add_executable(week3potw week3/potw/main.cpp)
