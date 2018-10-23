@@ -30,10 +30,16 @@ else()
 endif()
 
 add_executable(graphs week4/graphs/main.cpp)
+add_executable(importantbridges week4/importantbridges/main.cpp)
+add_executable(buddies week4/buddies/main.cpp)
+add_executable(week6potw week6/potw/main.cpp)
 
 if(Boost_FOUND)
 
     target_link_libraries(graphs ${Boost_LIBRARIES})
+    target_link_libraries(importantbridges ${Boost_LIBRARIES})
+    target_link_libraries(buddies ${Boost_LIBRARIES})
+    target_link_libraries(week6potw ${Boost_LIBRARIES})
 
 endif()
 
@@ -57,3 +63,4 @@ add_executable(firsthit week3/firsthit/main.cpp)
 add_executable(antenna week3/antenna/main.cpp)
 add_executable(almost_antenna week3/almost-antenna/main.cpp)
 add_executable(week3potw week3/potw/main.cpp)
+add_executable(light_at_the_museum week5/light_at_the_museum/main.cpp)
