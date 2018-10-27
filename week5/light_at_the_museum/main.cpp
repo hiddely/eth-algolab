@@ -6,6 +6,8 @@
 #include <vector>
 #include <tuple>
 #include <climits>
+#include <set>
+#include <algorithm>
 
 int BitCount(unsigned int u)
 {
@@ -19,28 +21,40 @@ int BitCount(unsigned int u)
              & 030707070707) % 63;
 }
 
-bool match(std::vector<int> &target, std::vector<std::vector<std::pair<int, int>>> &switches, int config, int numSwitches, int numRooms) {
-    for (int b = 0; b < numRooms; b++) {
-        int sum = 0;
-//        std::cout << "Room " << b << " ";
-        for (int a = 0; a < numSwitches; a++) {
-            // enabled if the bit in config is 0 / 1
-            if (config & 1 << a) {
-//                std::cout << "on " << switches[a][b].first << " ";
-                sum += switches[a][b].first;
-            } else {
-//                std::cout << "off " << switches[a][b].second << " ";
-                sum += switches[a][b].second;
-            }
-        }
-//        std::cout << std::endl;
-        if (sum != target[b]) {
-//            std::cout << sum << " does nto equal " << target[b] << " (" << b << ")" << std::endl;
-            return false;
+int sum(int room, std::vector<std::vector<std::pair<int, int>>> &switches, int config, int start, int end) {
+    int sum = 0;
+    for (int a = start; a < end; a++) {
+        // enabled if the bit in config is 0 / 1
+        if (config & 1 << (a - start)) {
+            sum += switches[a][room].first;
+        } else {
+            sum += switches[a][room].second;
         }
     }
-    return true;
+    return sum;
 }
+
+struct Sum {
+    int s;
+    int index;
+
+    Sum() = default;
+    Sum(int x, int i): s(x), index(i) {}
+
+    bool operator <(const Sum &o) const {
+        return this->s < o.s;
+    }
+};
+
+struct lex_compare {
+    bool operator() (const Sum &p1, const Sum &p2) const {
+        return p1.s < p2.s;
+    }
+};
+//
+//bool operator < (const Sum &s1, const Sum &s2) {
+//    return s1.s < s2.s;
+//}
 
 void testcase() {
     int numSwitches; int numRooms;
@@ -70,30 +84,104 @@ void testcase() {
 //        std::cout << std::endl;
 //    }
 
-//    int split = numSwitches / 2;
-//    for (int a 0 ; )
+    int split1 = numSwitches / 2;
+    int split2 = numSwitches - split1;
+    int count1 = 1 << split1;
+    int count2 = 1 << split2;
 
-    int min = INT_MAX;
-    for (int a = 1 << numSwitches; a > 0; a--) {
-        std::cout << "Trying " << a << std::endl;
-        if (match(target, switches, a, numSwitches, numRooms)) {
-            int s = BitCount(a); // 2
-            int x = numSwitches - s;
-//            std::cout << "wewmatch at " << x << std::endl;
-            min = std::min(min, x);
+    std::vector<std::vector<Sum> > sum1(numRooms, std::vector<Sum>(count1));
+    std::vector<std::vector<Sum> > sum2(numRooms, std::vector<Sum>(count2));
+    for (int b = 0; b < numRooms; b++){
+        for (int a = count1 - 1; a >= 0; a--) {
+            int s = sum(b, switches, a, 0, split1);
+//            std::bitset<16> on(a);
+//            std::cout << a << ": s(" << s << ") " << on << std::endl;
+//            std::cout << split1 - BitCount(a) << ": " << s << std::endl;
+            sum1[b][a] = Sum(s, a);
+        }
+        for (int a = count2 - 1; a >= 0; a--) {
+            int s = sum(b, switches, a, split1, numSwitches);
+//            if (s != 866) {
+//if (a == 32509) {
+//    std::bitset<16> on(a);
+//    std::cout << a << " Adding s " << s << " " << on << " " << split1 << " " << numSwitches << std::endl;
+//
+//}
+//            }
+//            std::cout << split2 - BitCount(a) << ": " << s << std::endl;
+
+            sum2[b][a] = Sum(s, a);
+        }
+        std::sort(sum1[b].begin(), sum1[b].end());
+        std::sort(sum2[b].begin(), sum2[b].end());
+    }
+
+//    for (int a = split; a < numSwitches; a++ ){
+//        std::cout << "Switch: " << a << ": " << switches[a][0].first << " " << switches[a][0].second << std::endl;
+//    }
+
+//    std::vector<std::set<std::pair<int, int>, lex_compare> > choices(numRooms);
+//    for (int b = 0; b < numRooms; b++) {
+//        for (int a = count; a > 0; a--) { // the choice
+//            int s1 = sum1[b][a];
+//            int diff = target[b] - s1;
+//            auto elem = std::lower_bound(sum2[b].cbegin(), sum2[b].cend(), diff); // should we find other options too?
+//            if (*elem == diff) {
+//                std::cout << "Match ! " << s1 << " + " << *elem << " = " << target[0] << std::endl;
+////                std::cout << a << " " << elem << std::endl;
+//                choices[b].insert(std::pair<int, int>(a, elem));
+//            }
+//        }
+//    }
+//
+//    // Configs for the rooms have to match...
+//    for (int b = 0; b < numRooms; b++) {
+//
+//    }
+
+    int i = 0; int j = count2 - 1;
+    int maxSwitches = INT_MAX;
+    while (i < count1 && j >= 0) {
+
+        std::vector<int> matches(numRooms);
+        for (int r = 0; r < numRooms; r++) {
+            matches[r] = sum1[r][i].s + sum2[r][j].s;
+
+        }
+        int numSwitchesNeeded = (split1 - BitCount(sum1[0][i].index)) + (split2 - BitCount(sum2[0][j].index));
+//std::cout << "NumSwitches " << numSwitchesNeeded <<std::endl;
+        if (matches == target) {
+            if (numSwitchesNeeded < maxSwitches) {
+                maxSwitches = numSwitchesNeeded;
+            }
+            if (j > 0 && sum2[0][j].s == sum2[0][j - 1].s) {
+                j--;
+            } else if (i < count1 - 1 && sum1[0][i].s == sum1[0][i + 1].s) {
+                i++;
+            } else if (j > 0) {
+                j--;
+            } else {
+                i++;
+            }
+        } else if (matches < target) {
+            i++;
+        } else {
+            j--;
         }
     }
-    if (min == INT_MAX) {
+    if (maxSwitches == INT_MAX) {
         std::cout << "impossible" << std::endl;
     } else {
-        std::cout << min << std::endl;
+        std::cout << maxSwitches << std::endl;
     }
+
 }
 
 
 
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
     int t; std::cin >> t;
     while (t > 0) {
         testcase();
