@@ -44,6 +44,10 @@ struct Sum {
     bool operator <(const Sum &o) const {
         return this->s < o.s;
     }
+
+    bool operator ==(const Sum &o) const {
+        return this->s == o.s;
+    }
 };
 
 struct lex_compare {
@@ -77,27 +81,20 @@ void testcase() {
         }
     }
 
-//    for (int b = 0; b < numRooms; b++) {
-//        for (int a = 0; a < numSwitches; a++ ){
-//            std::cout << switches[a][b].first << " " << switches[a][b].second << " ";
-//        }
-//        std::cout << std::endl;
-//    }
-
     int split1 = numSwitches / 2;
     int split2 = numSwitches - split1;
     int count1 = 1 << split1;
     int count2 = 1 << split2;
 
-    std::vector<std::vector<Sum> > sum1(numRooms, std::vector<Sum>(count1));
-    std::vector<std::vector<Sum> > sum2(numRooms, std::vector<Sum>(count2));
+    std::vector<std::vector<int> > sum1(count1, std::vector<int>(numRooms));
+    std::vector<std::vector<Sum> > sum2(count2, std::vector<Sum>(numRooms));
     for (int b = 0; b < numRooms; b++){
         for (int a = count1 - 1; a >= 0; a--) {
             int s = sum(b, switches, a, 0, split1);
 //            std::bitset<16> on(a);
 //            std::cout << a << ": s(" << s << ") " << on << std::endl;
 //            std::cout << split1 - BitCount(a) << ": " << s << std::endl;
-            sum1[b][a] = Sum(s, a);
+            sum1[a][b] = s;
         }
         for (int a = count2 - 1; a >= 0; a--) {
             int s = sum(b, switches, a, split1, numSwitches);
@@ -110,11 +107,49 @@ void testcase() {
 //            }
 //            std::cout << split2 - BitCount(a) << ": " << s << std::endl;
 
-            sum2[b][a] = Sum(s, a);
+            sum2[a][b] = Sum(s, a);
         }
-        std::sort(sum1[b].begin(), sum1[b].end());
-        std::sort(sum2[b].begin(), sum2[b].end());
     }
+
+    std::sort(sum2.begin(), sum2.end());
+
+//    std::cout << "Sum 2:" << std::endl;
+//    for (int a = 0; a < count2; a++) {
+//        std::cout << sum2[a][0].index << ": ";
+//        for (int b = 0; b < numRooms; b++) {
+//            std::cout << sum2[a][b].s << " ";
+//        }
+//        std::cout << std::endl;
+//    }
+
+    int min = INT_MAX;
+    for (int a = 0; a < count1; a++) {
+        std::vector<Sum> s(numRooms);
+//        std::cout << "looking for ";
+        for (int b = 0; b < numRooms; b++) {
+            s[b] = Sum(target[b] - sum1[a][b], 0);
+//            std::cout << s[b].s << " ";
+        }
+//        std::cout << std::endl;
+
+        int bc1 = split1 - BitCount(a);
+
+        auto iter = std::lower_bound(sum2.begin(), sum2.end(), s);
+        while (iter != sum2.end() && *iter == s) { // get all values
+//            std::cout << "Found match " << a << ", " << ((*iter)[0]).index << std::endl;
+            int bc2 = split2 - BitCount((*iter)[0].index);
+            if (bc1 + bc2 < min) {
+                min = bc1 + bc2;
+            }
+            iter++;
+        }
+    }
+    if (min == INT_MAX) {
+        std::cout << "impossible" << std::endl;
+    } else {
+        std::cout << min << std::endl;
+    }
+
 
 //    for (int a = split; a < numSwitches; a++ ){
 //        std::cout << "Switch: " << a << ": " << switches[a][0].first << " " << switches[a][0].second << std::endl;
@@ -139,49 +174,61 @@ void testcase() {
 //
 //    }
 
-    int i = 0; int j = count2 - 1;
-    int maxSwitches = INT_MAX;
-    while (i < count1 && j >= 0) {
-
-        std::vector<int> matches(numRooms);
-        for (int r = 0; r < numRooms; r++) {
-            matches[r] = sum1[r][i].s + sum2[r][j].s;
-
-        }
-        int numSwitchesNeeded = (split1 - BitCount(sum1[0][i].index)) + (split2 - BitCount(sum2[0][j].index));
-//std::cout << "NumSwitches " << numSwitchesNeeded <<std::endl;
-        if (matches == target) {
-            if (numSwitchesNeeded < maxSwitches) {
-                maxSwitches = numSwitchesNeeded;
-            }
-            if (j > 0 && sum2[0][j].s == sum2[0][j - 1].s) {
-                j--;
-            } else if (i < count1 - 1 && sum1[0][i].s == sum1[0][i + 1].s) {
-                i++;
-            } else if (j > 0) {
-                j--;
-            } else {
-                i++;
-            }
-        } else if (matches < target) {
-            i++;
-        } else {
-            j--;
-        }
-    }
-    if (maxSwitches == INT_MAX) {
-        std::cout << "impossible" << std::endl;
-    } else {
-        std::cout << maxSwitches << std::endl;
-    }
-
+//    std::set<int> topMatches;
+//    for (int a = 0; a < count1 - 1; a++) { // the choice
+//        // Potential for saving: Keep track which indexes
+//        std::vector<std::set<int>> matches(numRooms);
+//        for (int b = 0; b < numRooms; b++ ) {
+//            int s1 = sum1[b][a];
+//            Sum diff = Sum(target[b] - s1, -1);
+//            auto elem = sum2[b].lower_bound(diff);
+//            if (elem->s == diff.s) {
+//                matches[b].insert(elem->index);
+//                std::cout << "Match: " << a << "," << elem->index << std::endl;
+////                elem++;
+//            }
+////                    std::cout << b << " Match " << elem->index << ": " << s1 << " + " << elem->s << " = " << target[b]
+////                              << std::endl;
+////                match[b] = true;
+//
+//
+//        }
+//        std::set<int> m = matches[0];
+//
+////        for (int b = 1; b < numRooms; b++) {
+//////            auto r = matches[b].begin();
+//////            for (; r != matches[b].end(); r++) {
+//////                std::cout << "Testing " << *r << std::endl;
+//////            }
+////            std::set<int>temp;
+////            set_intersection(m.begin(), m.end(), matches[b].begin(), matches[b].end(), std::inserter(temp,temp.begin()));
+//////            auto t = temp.begin();
+//////            for (; t != temp.end(); t++) {
+//////                std::cout << "M Contains " << *t << std::endl;
+//////            }
+////            m = temp;
+////        }
+//
+//        int g = split1 - BitCount(a);
+//        auto iter = m.begin();
+//        int min = INT_MAX;
+//        for (; iter != m.end(); iter++) {
+//            int h = split2 - BitCount(*iter);
+////            std::bitset<16> b(*iter);
+////            std::bitset<16> c(g);
+////            std::cout << "Bits: " << h << " " << b << " " << g << " " << c << std::endl;
+//            min = std::min(g + h, min);
+//        }
+//        if (min < INT_MAX) {
+//            topMatches.insert(min);
+//        }
+//    }
 }
 
 
 
 
 int main() {
-    std::ios_base::sync_with_stdio(false);
     int t; std::cin >> t;
     while (t > 0) {
         testcase();
