@@ -41,6 +41,9 @@ void testcase() {
 //        std::cout << people[i] << std::endl;
     }
 
+    Apollonius_graph ag;
+    ag.in
+
     Triangulation t;
 
     int h; std::cin >> h;
