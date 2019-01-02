@@ -8,14 +8,16 @@
 #include <set>
 #include <vector>
 
+typedef int NameIndex;
+
 struct Entry {
     int i;
     int age;
-    std::string name;
-    std::string parent = "";
+    NameIndex name;
+    NameIndex parent = -1;
 
     Entry() = default;
-    Entry(int zz, int a, std::string b): i(zz), age(a), name(b) {}
+    Entry(int zz, int a, NameIndex b): i(zz), age(a), name(b) {}
 
     bool operator < (const Entry &e) const {
         return this->age < e.age && this->name < e.name;
@@ -26,11 +28,11 @@ struct Entry {
 struct APtrComp
 {
     bool operator()(const Entry* lhs, const Entry* rhs) const  {
-        if (lhs->age == rhs->age && lhs->name.compare(rhs->name) == 0) {
+        if (lhs->age == rhs->age && lhs->name == rhs->name) {
             return lhs->i < rhs->i;
         }
         if (lhs->age == rhs->age) {
-            return lhs->name.compare(rhs->name) < 0;
+            return lhs->name < rhs->name;
         }
         return lhs->age < rhs->age;
     }
@@ -43,21 +45,25 @@ void testcase() {
     int n, q;
     std::cin >> n >> q;
 
-    std::unordered_map<std::string, int> ages;
-    std::unordered_map<std::string, bool> leafs;
+    std::vector<std::string> names(n);
+    std::unordered_map<std::string, NameIndex> nameLookup(n);
+    std::unordered_map<NameIndex, int> ages;
+    std::unordered_map<NameIndex, bool> leafs;
+    std::vector<NameIndex> ancestors(n, -1);
     for (int i = 0; i < n; i++) {
         std::string name; std::cin >> name;
         int age; std::cin >> age;
-        ages[name] = age;
-        leafs[name] = true;
+        names[i] = name;
+        nameLookup[name] = i;
+        ages[i] = age;
+        leafs[i] = true;
     }
 
-    std::unordered_map<std::string, std::string> ancestors;
     for (int i = 0; i < n - 1; i++) {
         std::string child; std::cin >> child;
         std::string parent; std::cin >> parent;
-        ancestors[child] = parent;
-        leafs[parent] = false;
+        ancestors[nameLookup[child]] = nameLookup[parent];
+        leafs[nameLookup[parent]] = false;
     }
 //
 //    std::unordered_map<std::string, Lookup> lookupTable;
@@ -85,24 +91,29 @@ void testcase() {
 
     std::vector<Entry> challengeOrder(n);
 
-    std::unordered_map<std::string, Lookup> challenges;
-    std::unordered_map<std::string, bool> found;
+    std::unordered_map<NameIndex, std::vector<Entry *>> challenges;
+    std::unordered_map<NameIndex, bool> found;
 //    std::set<Entry*> sortedChallenges;
+//std::cerr << "1" << std::endl;
     for (int i = 0; i < q; i++) {
         std::string current; std::cin >> current;
         int maxAge; std::cin >> maxAge;
-        challengeOrder[i] = Entry(i, maxAge, current);
+        challengeOrder[i] = Entry(i, maxAge, nameLookup[current]);
 
-        challenges[current].insert(&challengeOrder[i]);
+        challenges[nameLookup[current]].push_back(&challengeOrder[i]);
 //        sortedChallenges.insert(&challengeOrder[i]);
     }
 
+//    std::cerr << "2" << std::endl;
+
     for (auto leafIter = leafs.cbegin(); leafIter != leafs.cend(); leafIter++) {
         if (leafIter->second) {
-            std::string current = leafIter->first;
+            NameIndex current = leafIter->first;
+
+//            std::cerr << "5" << std::endl;
 
             Lookup sortedChallenges;
-            while (current != "") {
+            while (current != -1) {
                 if (!found[current]) {
 //                    if (current == "aaf") {
 //                        for (auto dd = sortedChallenges.begin(); dd != sortedChallenges.end(); dd++) {
@@ -140,28 +151,39 @@ void testcase() {
 //                    }
 //                }
 
-                std::string parent = ancestors[current];
+//                std::cerr << "7 " << current << std::endl;
+
+
+                NameIndex parent = ancestors[current];
 //                std::cout << "Age: " << e.age << std::endl;
 //                std::cout << (*max) << (*sortedChallenges.end()) << std::endl;
 
-
-                for (auto iter = sortedChallenges.begin(); iter != sortedChallenges.end(); ) {
+                Lookup::iterator iter;
+                for (iter = sortedChallenges.begin(); iter != sortedChallenges.end(); iter++) {
 //                    if ((*iter)->name == "aaf") {
 //                        std::cout << "At " << (*iter)->name << " " << current << std::endl;
 //                    }
-                    if (parent != "" && ages[parent] <= (*iter)->age) {
+                    if (parent != -1 && ages[parent] <= (*iter)->age) {
                         break;
                     }
                     (*iter)->parent = current;
 //                    std::cout << "Erasing " << (*iter)->name << std::endl;
-                    iter = sortedChallenges.erase(iter);
+//                    iter = sortedChallenges.erase(iter);
+                }
+                if (sortedChallenges.begin() != iter) {
+                    sortedChallenges.erase(sortedChallenges.begin(), iter);
                 }
                 current = parent;
             }
+
+//            std::cerr << "6" << std::endl;
+
             // find challenges
 
         }
     }
+
+//    std::cerr << "3" << std::endl;
 
     bool first = true;
     for (int i = 0; i < q; i++) {
@@ -170,13 +192,15 @@ void testcase() {
         } else {
             first = false;
         }
-        std::cout << challengeOrder[i].parent;
-        if (challengeOrder[i].parent == "") {
+        std::cout << names[challengeOrder[i].parent];
+        if (challengeOrder[i].parent == -1) {
             std::cout << "EMPTY " << std::endl;
             std::cout << challengeOrder[i].name << std::endl;
             std::cout << challengeOrder[i].age << std::endl;
         }
     }
+
+//    std::cerr << "4" << std::endl;
 
     std::cout << std::endl;
 }
