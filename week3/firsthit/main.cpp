@@ -4,12 +4,12 @@
 
 #include <iostream>
 #include <iomanip>
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/intersections.h>
 #include <CGAL/number_utils.h>
 #include <cmath>
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 typedef K::Point_2 P;
 typedef K::Ray_2 Ray;
 typedef K::Segment_2 S;
@@ -83,6 +83,8 @@ void testcase(int n) {
     if (hasIntersect) {
 
         std::cout << std::fixed << std::setprecision(0) << floor_to_double(intersegment.target().x()) << " " << floor_to_double(intersegment.target().y()) << std::endl;
+//        std::cout << std::fixed << std::setprecision(0) << floor_to_double(intersegment.source().x()) << " " << floor_to_double(intersegment.source().y()) << std::endl;
+
     } else {
         std::cout << "no" << std::endl;
     }

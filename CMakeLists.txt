@@ -36,6 +36,8 @@ add_executable(week6potw week6/potw/main.cpp)
 add_executable(cointossing week6/cointossing/main.cpp)
 add_executable(shopping week6/shopping/main.cpp)
 add_executable(week10potw week10/potw/main.cpp)
+add_executable(casino_royale week12/casino_royale/main_badidea.cpp)
+add_executable(san_francisco week11/san_francisco/main.cpp)
 
 if(Boost_FOUND)
 
@@ -46,6 +48,8 @@ if(Boost_FOUND)
     target_link_libraries(cointossing ${Boost_LIBRARIES})
     target_link_libraries(shopping ${Boost_LIBRARIES})
     target_link_libraries(week10potw ${Boost_LIBRARIES})
+    target_link_libraries(casino_royale ${Boost_LIBRARIES})
+    target_link_libraries(san_francisco ${Boost_LIBRARIES})
 
 endif()
 
@@ -75,3 +79,4 @@ add_executable(punch week5/punch/main.cpp)
 add_executable(week7potw week7/potw/main.cpp)
 add_executable(h1n1 week8/h1n1/main.cpp)
 add_executable(evolution week10/evolution/main.cpp)
+add_executable(planks week11/planks/main.cpp)
