@@ -3,14 +3,14 @@
 //
 
 #include <iostream>
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
 #include <stack>
 #include <vector>
 #include <map>
 #include <queue>
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 typedef CGAL::Delaunay_triangulation_2<K> Triangulation;
 typedef Triangulation::Face_handle Face_handle;
 typedef K::Point_2 Point;
@@ -24,9 +24,9 @@ struct DoubleDefaultedToMinusOne
 
 struct Entry {
     Face_handle fh;
-    double size;
+    K::FT size;
 
-    Entry(Face_handle a, double b): fh(a), size(b) {}
+    Entry(Face_handle a, K::FT b): fh(a), size(b) {}
 
     bool operator < (const Entry &other) const {
         return this->size < other.size; // biggest first
@@ -50,11 +50,11 @@ int main() {
 
         std::priority_queue<Entry> toVisit;
         std::map<Face_handle, bool> visited;
-        std::map<Face_handle, double> maxSize;
+        std::map<Face_handle, K::FT> maxSize;
 
         Triangulation::Face_circulator f = t.incident_faces(t.infinite_vertex());
         do {
-            maxSize[f] = std::numeric_limits<double>::max();
+            maxSize[f] = K::FT(std::numeric_limits<double>::max());
             for (int i = 0; i < 3; i++) {
                 auto v1 = f->vertex(i % 3);
                 auto v2 = f->vertex((i + 1) % 3);
@@ -63,7 +63,8 @@ int main() {
                 if (t.is_infinite(face)) {
                     continue;
                 }
-                double dist = CGAL::squared_distance(v1->point(), v2->point());
+                K::FT dist = CGAL::squared_distance(v1->point(), v2->point());
+                maxSize[face] = dist;
 //                std::cerr << "Adding with " << dist << std::endl;
                 visited[face] = true;
                 toVisit.push(Entry(face, dist));
@@ -99,21 +100,24 @@ int main() {
 //            }
 //            std::cerr << std::endl;
 
-//            maxSize[curFace] = std::max(maxSize[curFace], cur.size);
+            maxSize[curFace] = std::max(maxSize[curFace], cur.size);
 
             for (int i = 0; i < 3; i++) {
                 auto v1 = curFace->vertex(i % 3);
                 auto v2 = curFace->vertex((i + 1) % 3);
                 int neigh = (i + 2) % 3;
                 Face_handle face = curFace->neighbor(neigh);
-                double dist = CGAL::squared_distance(v1->point(), v2->point());
-                double withPrev = std::min(dist, cur.size);
+                if (t.is_infinite(face)) {
+                    continue;
+                }
+                K::FT dist = CGAL::squared_distance(v1->point(), v2->point());
+                K::FT withPrev = std::min(dist, cur.size);
                 maxSize[face] = std::max(maxSize[face], withPrev);
                 if (visited[face]) {
                     continue;
                 }
                 visited[face] = true;
-                toVisit.push(Entry(face, withPrev));
+                toVisit.push(Entry(face, maxSize[face]));
             }
         }
 
@@ -131,6 +135,7 @@ int main() {
             Point person;
             std::cin >> person;
              long d; std::cin >> d;
+             K::FT dist = K::FT(d);
             // Probably inefficient
             Face_handle start = t.locate(person);
 
@@ -140,8 +145,8 @@ int main() {
 //            }
 
             Point nearestInfected = t.nearest_vertex(person)->point();
-            double d1 = CGAL::squared_distance(person, nearestInfected);
-            if (d1 >= d && maxSize[start] >= d * 4.0) {
+            K::FT d1 = CGAL::squared_distance(person, nearestInfected);
+            if (d1 >= dist && maxSize[start] >= dist * 4.0) {
                 // we are good
                 std::cout << "y";
             } else {

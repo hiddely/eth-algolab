@@ -8,6 +8,7 @@
 #include <CGAL/intersections.h>
 #include <CGAL/number_utils.h>
 #include <cmath>
+#include <algorithm>
 
 typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 typedef K::Point_2 P;
@@ -31,13 +32,25 @@ void testcase(int n) {
     S intersegment;
     bool hasIntersect = false;
 
-    for (int i = 0; i < n; i ++ ){
-        long r; long s; long t; long u;
-        std::cin >> r; std::cin >> s; std::cin >> t; std::cin >> u;
+    std::vector<S> segments(n);
+
+    for (int i = 0; i < n; i ++ ) {
+        long r;
+        long s;
+        long t;
+        long u;
+        std::cin >> r;
+        std::cin >> s;
+        std::cin >> t;
+        std::cin >> u;
 
         P o1(r, s), o2(t, u);
         K::Segment_2 segment(o1, o2);
-
+        segments[i] = segment;
+    }
+    std::random_shuffle(segments.begin(), segments.end());
+    for (int i = 0; i < n; i++) {
+        K::Segment_2 segment = segments[i];
         if (hasIntersect) {
 
             if (CGAL::do_intersect(intersegment, segment)) {
