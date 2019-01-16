@@ -3,30 +3,24 @@
 //
 
 #include <iostream>
-#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
 #include <stack>
 #include <vector>
 #include <map>
 #include <queue>
 
-typedef CGAL::Exact_predicates_exact_constructions_kernel K;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Delaunay_triangulation_2<K> Triangulation;
 typedef Triangulation::Face_handle Face_handle;
 typedef K::Point_2 Point;
 
-struct DoubleDefaultedToMinusOne
-{
-    double i = -1;
-
-    DoubleDefaultedToMinusOne(double a): i(a) {}
-};
-
 struct Entry {
     Face_handle fh;
     K::FT size;
+    Face_handle from;
 
-    Entry(Face_handle a, K::FT b): fh(a), size(b) {}
+    Entry(Face_handle a, K::FT b, Face_handle f): fh(a), size(b), from(f) {}
 
     bool operator < (const Entry &other) const {
         return this->size < other.size; // biggest first
@@ -54,40 +48,22 @@ int main() {
 
         Triangulation::Face_circulator f = t.incident_faces(t.infinite_vertex());
         do {
-            maxSize[f] = K::FT(std::numeric_limits<double>::max());
-            for (int i = 0; i < 3; i++) {
-                auto v1 = f->vertex(i % 3);
-                auto v2 = f->vertex((i + 1) % 3);
-                int neigh = (i + 2) % 3;
-                Face_handle face = f->neighbor(neigh);
-                if (t.is_infinite(face)) {
-                    continue;
-                }
-                K::FT dist = CGAL::squared_distance(v1->point(), v2->point());
-                maxSize[face] = dist;
+            if (t.is_infinite(f)) {
+                maxSize[f] = K::FT(INT64_MAX);
+                visited[f] = true;
+                for (int i = 0; i < 3; i++) {
+                    Face_handle face = f->neighbor(i);
+                    if (t.is_infinite(face)) {
+                        continue;
+                    }
+                    K::FT dist = t.segment(f, i).squared_length();
+//                maxSize[face] = dist;
 //                std::cerr << "Adding with " << dist << std::endl;
-                visited[face] = true;
-                toVisit.push(Entry(face, dist));
+                    visited[face] = true;
+                    toVisit.push(Entry(face, dist, f));
+                }
             }
         } while (++f != t.incident_faces(t.infinite_vertex()));
-
-//        for (Face_iterator start = t.all_faces_begin(); start != t.all_faces_end(); ++start) {
-//            //
-//            Face_handle curFace = *start;
-//            if (!t.is_infinite(curFace)) {
-//                continue;
-//            }
-//
-//            for (int i = 0; i < 3; i++) {
-//                auto v1 = curFace->vertex(i % 3);
-//                auto v2 = curFace->vertex((i + 1) % 3);
-//                int neigh = (i + 2) % 3;
-//                Face_handle face = curFace->neighbor(neigh);
-//                double dist = CGAL::squared_distance(v1->point(), v2->point());
-//                toVisit.push(Entry(face, dist));
-//            }
-//        }
-
 
         while (!toVisit.empty()) {
             Entry cur = toVisit.top();
@@ -100,24 +76,21 @@ int main() {
 //            }
 //            std::cerr << std::endl;
 
-            maxSize[curFace] = std::max(maxSize[curFace], cur.size);
+//            maxSize[curFace] = std::max(maxSize[curFace], cur.size);
+            visited[curFace] = true;
+//            if ()
+            maxSize[curFace] = std::max(maxSize[curFace], std::min(maxSize[cur.from], cur.size));
 
             for (int i = 0; i < 3; i++) {
-                auto v1 = curFace->vertex(i % 3);
-                auto v2 = curFace->vertex((i + 1) % 3);
-                int neigh = (i + 2) % 3;
-                Face_handle face = curFace->neighbor(neigh);
-                if (t.is_infinite(face)) {
-                    continue;
-                }
-                K::FT dist = CGAL::squared_distance(v1->point(), v2->point());
-                K::FT withPrev = std::min(dist, cur.size);
-                maxSize[face] = std::max(maxSize[face], withPrev);
+                Face_handle face = curFace->neighbor(i);
                 if (visited[face]) {
                     continue;
                 }
-                visited[face] = true;
-                toVisit.push(Entry(face, maxSize[face]));
+                K::FT dist = t.segment(curFace, i).squared_length();
+//                K::FT withPrev = std::min(dist, maxSize[curFace]);
+//                maxSize[face] = withPrev;
+//                maxSize[face] = std::max(maxSize[face], withPrev);
+                toVisit.push(Entry(face, dist, curFace));
             }
         }
 

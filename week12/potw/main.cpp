@@ -45,82 +45,94 @@ void testcase() {
     std::cin >> n >> m >> k;
 
     Graph G(n);
-    WeightMap weightmap = boost::get(boost::edge_weight, G);	// start by defining property maps for all interior properties defined in Lines 37, 38
-    TempMap tempMap = boost::get(boost::vertex_index2, G);
+//    WeightMap weightmap = boost::get(boost::edge_weight, G);	// start by defining property maps for all interior properties defined in Lines 37, 38
+//    TempMap tempMap = boost::get(boost::vertex_index2, G);
 
+    std::vector<int> temps(n);
     for (int i = 0; i < n; i ++) {
         int temp; std::cin >> temp;
-        tempMap[i] = temp;
+        temps[i] = temp;
     }
 
+    std::vector<int> predmap(n);
     for (int i = 0; i < n - 1; i++) {
         int u, v;
         std::cin >> u >> v;
-//        if (abs(tempMap[u] - tempMap[v]) <= k) {
-            Edge e; bool s;
-            boost::tie(e, s) = boost::add_edge(u, v, G);
-//        }
+        Edge e; bool s;
+        boost::tie(e, s) = boost::add_edge(u, v, G);
+        predmap[v] = u;
     }
 
-//    std::vector<int> component(n);
-//    int num = boost::connected_components(G, &component[0]);
+    // assuming line
+    Vertex start = 0;
+    Vertex lastStart = 0;
+    int min = INT_MAX;
+    int max = INT_MIN;
+    int currentCount = 0;
+    int numRoutes = 0;
+    std::set<int> outputs;
+    std::vector<Vertex> currents;
+    while (start != -1) {
 
-//    std::cout << num << std::endl;
+        min = std::min(min, temps[start]);
+        max = std::max(max, temps[start]);
 
-//    for (int i = 0; i < n; i ++ ) {
-//        std::cout << "Vertex " << i << ": " << component[i] << std::endl;
-//    }
-
-
-    // start at 0
-    Vertex next = 0;
-    std::deque<Vertex> window;
-//    window.push_back(next);
-    std::set<int> starts;
-    int windowSize = 0;
-    while (next != -1) {
-//        std::cout << " -> " << next << "(" << tempMap[next] << ")";
-        window.push_back(next);
-        windowSize++;
-        if (windowSize > m) { // remove to optimize
-            window.pop_front();
-            windowSize--;
-        }
-        if (windowSize == m) {
-            MinMax mm = find(window, tempMap);
-
-//            std::cout << "Min " << min->temp << ", max " << max->temp << ", size " << size << std::endl;
-
-            if (abs(mm.first - mm.second) <= k) {
-                // we have a match
-//                std::cout << max->temp - min->temp << " <= " << k << std::endl;
-//                std::cout << "ADding " << next << std::endl;
-                starts.insert(window.front());
+        if (max - min > k) {
+            // too much risk
+//            numRoutes += std::max(0, m - currentCount + 1);
+            Vertex p = start;
+            for (int i = 0; i < currentCount - m + 1; i++){
+                outputs.insert(currents[i]);
             }
+            min = temps[start];
+            max = temps[start];
+            currentCount = 0;
         }
 
-        OutEdgeIt iter, iterEnd;
-        boost::tie(iter, iterEnd) = boost::out_edges(next, G);
-        if (iter != iterEnd) {
-            next = boost::target(*iter,G);
-        } else {
-//            std::cout <<" No out edges found for " << next << std::endl;
-            break;
+        currents.push_back(start);
+        currentCount++;
+
+        OutEdgeIt e, eend;
+        Vertex x = -1;
+        for (boost::tie(e, eend) = boost::out_edges(start, G); e != eend; e++) {
+            Vertex t = boost::target(*e, G);
+//            std::cerr << "Setting start " << t << std::endl;
+            x = t;
         }
+        lastStart = start;
+        start = x;
     }
 
-    if (starts.empty()) {
+    if (max - min <= k) {
+        // too much risk
+//            numRoutes += std::max(0, m - currentCount + 1);
+        Vertex p = lastStart;
+        for (int i = 0; i < m - 1; i++){
+            p = predmap[p];
+        }
+//        std::cerr << start << " Ad2ding " << p << " " << currentCount - m + 1 << std::endl;
+        for (int i = 0; i < currentCount - m + 1; i++) {
+            outputs.insert(p);
+            p = predmap[p];
+        }
+        min = temps[start];
+        max = temps[start];
+        currentCount = 0;
+    }
+
+//    std::cout << numRoutes << std::endl;
+    if (outputs.empty()) {
         std::cout << "Abort mission" << std::endl;
     } else {
-        for (auto iter = starts.cbegin(); iter != starts.cend(); iter++) {
+        for (auto iter = outputs.cbegin(); iter != outputs.cend(); iter++) {
             std::cout << *iter << " ";
         }
         std::cout <<std::endl;
     }
-
 }
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
     int t; std::cin >> t;
     while(t--) {
         testcase();

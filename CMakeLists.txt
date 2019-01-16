@@ -55,7 +55,6 @@ endif()
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(algolab main.cpp)
 add_executable(strings practice/strings/main.cpp)
 add_executable(even_pairs week1/even_pairs/main.cpp)
 add_executable(build_the_sum week1/build_the_sum/main.cpp)
@@ -80,3 +79,4 @@ add_executable(week7potw week7/potw/main.cpp)
 add_executable(h1n1 week8/h1n1/main.cpp)
 add_executable(evolution week10/evolution/main.cpp)
 add_executable(planks week11/planks/main.cpp)
+add_executable(poker_chips week10/poker_chips/main.cpp)
