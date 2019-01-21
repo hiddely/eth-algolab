@@ -4,8 +4,6 @@
 
 #include <iostream>
 #include <vector>
-#include <queue>
-#include <map>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
@@ -35,59 +33,6 @@ void testcase() {
 
     K::FT maxDist = K::FT(4 * r * r);
 
-    K::FT radius = K::FT(r * r);
-
-    std::queue<Vertex_handle> toVisit;
-    std::map<Vertex_handle, bool> color;
-    std::map<Vertex_handle, bool> visited;
-
-    for (auto fiter = t.finite_vertices_begin(); fiter != t.finite_vertices_end(); fiter++) {
-        toVisit.push(fiter);
-        visited[fiter] = true;
-
-        while (!toVisit.empty()) {
-            Vertex_handle n = toVisit.front();
-            toVisit.pop();
-
-//        std::cerr << "Vertex " << n->point() << std::endl;
-
-            Triangulation::Edge_circulator c = t.incident_edges(n);
-            do {
-                if (!t.is_infinite(c) && t.segment(c).squared_length() <= radius) {
-                    Triangulation::Vertex_handle v1 = c->first->vertex((c->second + 1) % 3);
-                    Triangulation::Vertex_handle v2 = c->first->vertex((c->second + 2) % 3);
-                    Triangulation::Vertex_handle o;
-                    if (v1 == n) {
-                        o = v2;
-                    } else {
-                        o = v1;
-                    }
-//            std::cerr << "V " << o->point() << " through edge " <<std::endl;
-                    if (!t.is_infinite(o) && !visited[o]) {
-                        color[o] = !color[n];
-//                std::cerr << "Assiging color " << color[o] << " to " << o->point() << std::endl;
-                        toVisit.push(o);
-                        visited[o] = true;
-                    }
-                }
-            } while (++c != t.incident_edges(n));
-        }
-    }
-
-
-    // All vertices have a color, deterministically
-    bool interference = false;
-    for (auto iter = t.finite_edges_begin(); iter != t.finite_edges_end(); iter++) {
-        Triangulation::Vertex_handle v1 = iter->first->vertex((iter->second + 1) % 3);
-        Triangulation::Vertex_handle v2 = iter->first->vertex((iter->second + 2) % 3);
-        if (t.segment(iter).squared_length() <= radius && color[v1] == color[v2]) {
-//            std::cerr << "Adding " << t.segment(iter) << std::endl;
-//            std::cerr << v1->point() << " and " << v2->point() << " are interfereing " << std::endl;
-            interference = true;
-            break;
-        }
-    }
-
     // Construct the MST
     std::map<Vertex_handle, int> rank_map;
     std::map<Vertex_handle, Vertex_handle> parent_map;
@@ -104,6 +49,7 @@ void testcase() {
         dset.make_set(iter);
     }
 
+    K::FT radius = K::FT(r * r);
     std::vector<Edge> edges;
     for (auto iter = t.finite_edges_begin(); iter != t.finite_edges_end(); iter++) {
         if (t.segment(iter).squared_length() <= radius) {
@@ -115,9 +61,38 @@ void testcase() {
         return t.segment(e1).squared_length() < t.segment(e2).squared_length();
     });
 
-//    std::cerr << "Out " << std::endl;
+    std::map<Edge, bool> interference;
+    for (auto iter = t.finite_vertices_begin(); iter != t.finite_vertices_end(); iter++) {
+        // check that its neighbors are sufficiently far from each other
+        Triangulation::Edge_circulator c = t.incident_edges(iter);
+        Point lastPoint;
+        bool lInit = false;
+        do {
+            if (!t.is_infinite(c)) {
+                if (lInit) {
+                    Point thisPoint = t.segment(c).target();
+                    K::FT dist = CGAL::squared_distance(lastPoint, thisPoint);
+//                    std::cerr << "Comparing " << lastPoint << " " << thisPoint << " " << dist << std::endl;
+                    if (dist < radius) {
+//                        std::cout << component->point() << " has interference! " <<std::endl;
+                        interference[*c] = true;
+                        interference[*(c--)] = true;
+                        c++;
+//                        break;
+                    }
+                    lastPoint = thisPoint;
+                } else {
+                    lInit = true;
+                    lastPoint = t.segment(c).target();
+                }
+            }
+        } while (++c != t.incident_edges(iter));
+    }
 
     for (auto iter = edges.begin(); iter != edges.end(); iter++) {
+        if (interference[*iter]) {
+            continue;
+        }
         Vertex_handle u = iter->first->vertex((iter->second + 1) % 3);
         Vertex_handle v = iter->first->vertex((iter->second + 2) % 3);
         Vertex_handle su = dset.find_set(u);
@@ -127,6 +102,22 @@ void testcase() {
             dset.union_set(su, sv);
         }
     }
+
+    bool success = true;
+    Vertex_handle total;
+    bool inittotal = false;
+    for (auto iter = t.finite_vertices_begin(); iter != t.finite_vertices_end(); iter++) {
+        if (!inittotal) {
+            total = dset.find_set((Vertex_handle)iter);
+            inittotal = true;
+        } else {
+            Vertex_handle n = dset.find_set((Vertex_handle)iter);
+            if (!(total == n)) {
+                success = false;
+            }
+        }
+    }
+
         // read the input
     for (int i = 0; i < m; i++) {
         int ax, ay, bx, by;
@@ -134,7 +125,7 @@ void testcase() {
         Point a(ax, ay);
         Point b(bx, by);
 
-        if (interference) {
+        if (!success) {
             std::cout << "n";
             continue;
         }

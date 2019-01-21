@@ -37,93 +37,35 @@ struct Beverage {
     }
 };
 
-struct cmp_rat {
-    bool operator ()(const Beverage &o1, const Beverage &o2) const {
-        return o1.ratio() < o2.ratio();
+struct my_cmp {
+    bool operator () (const Beverage &b1, const Beverage &b2) const {
+        return b1.ratio() < b2.ratio();
     }
 };
-
-bool compare_ratio(const Beverage &o1, const Beverage &o2) {
-    if (o1.ratio() == o2.ratio()) {
-        return o1.volume < o2.volume;
-    }
-    return o1.ratio() < o2.ratio();
-}
 
 void testcase(int t) {
     int n; int people;
     std::cin >> n >> people;
     std::vector<Beverage> drinks(n);
-    std::set<Beverage> dRatio;
+//    std::set<Beverage> d;
     std::map<long, int> maxRatios;
     for (int i = 0; i < n; i++) {
         int c; int v;
         std::cin >> c >> v;
-        drinks[i] = Beverage(c, v);
-        dRatio.insert(Beverage(c, v));
-        maxRatios[drinks[i].ratio()]++;
+//        drinks[i] = Beverage(c, v);
+        Beverage b = Beverage(c, v);
+        drinks[i] = b;
+//        d.insert(b);
+        maxRatios[b.ratio()]++;
     }
 
-    // Sorted by ratio ("cheapest") then smallest volume
-    std::sort(drinks.begin(), drinks.end(), compare_ratio);
+    std::sort(drinks.begin(), drinks.end(), my_cmp());
 
-    int left = people;
-    int distinct = 0;
-    int cost = 0;
-    std::map<long, int> ratiosUsed;
-    auto first = drinks[0];
-    while (left >= first.volume) {
-        ratiosUsed[first.ratio()]++;
-        cost += first.cost;
-        left -= first.volume;
-//        std::cout << "Subbing " << first.cost << " " << first.volume << std::endl;
-    }
-
-//    int toDivide = first.volume - left; // How much 'width' do we have?
-//    for (int i = 0; i < n; i++) {
-//        // what drinks are lower than what we need but want more?
-//        int timesNeeded = ceil((double)left / (double)drinks[i].volume);
-//        int costToCover = timesNeeded * drinks[i].cost;
-//
-//    }
-
-    int min = INT_MAX;
-    Beverage b;
-    int times = 0;
-    for (int i = 0; i < n; i++) {
-        int t = ceil((double)left / (double)drinks[i].volume);
-        int costNeeded = t * drinks[i].cost;
-        if (costNeeded < min || (costNeeded == min && ratiosUsed[drinks[i].ratio()] < ratiosUsed[b.ratio()])) {
-            min = costNeeded;
-            b = drinks[i];
-            times = t;
-//            std::cout << "Settings to " << costNeeded << " " << left << " " << drinks[i].volume << std::endl;
-        }
-    }
-    ratiosUsed[b.ratio()] += times;
-    cost += min;
-//    for (auto iter = drinks.begin(); iter != drinks.end(); iter++) {
-//        while (left >= iter->volume) {
-//            ratiosUsed[iter->ratio()]++;
-//            cost += iter->cost;
-//            left -= iter->volume;
-//            std::cout << "Subbing " << iter->cost << " " << iter->volume << std::endl;
-//        }
-//    }
-//    if (left > 0) {
-//        auto cheapest = std::min_element(drinks.cbegin(), drinks.cend());
-//        left -= cheapest->volume;
-//        cost += cheapest->cost;
-////        std::cout << "Left is bigger " << left <<std::endl;
-//    }
-
-    int numDiffBev = 0;
-    for (auto it = ratiosUsed.begin(); it != ratiosUsed.end(); it++) {
-//        std::cout << "F " << it->first << std::endl;
-        numDiffBev += std::min(it->second, maxRatios[it->first]);
-    }
-
-    std::cout << cost << " " << numDiffBev << std::endl;
+    // get cheapest price
+    Beverage *cheapest = &drinks[0];
+    std::cerr << "Cheapest " << cheapest->cost << " " << cheapest->volume << std::endl;
+    int lowPrice = (people / cheapest->volume) * cheapest->cost;
+    std::cout << lowPrice << std::endl;
 }
 
 int main() {

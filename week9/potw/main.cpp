@@ -14,6 +14,8 @@ typedef CGAL::Quadratic_program_solution<ET> Solution;
 
 typedef CGAL::Quotient<ET> SolT;
 
+typedef double IT;
+
 double ceil_to_double (const SolT &x) {
     double a = std::ceil(CGAL::to_double(x));
     while (a < x) a++;
@@ -43,10 +45,13 @@ void testcase() {
 
     Program lp(CGAL::SMALLER, true, 1, false, 0);
 
+    double wDouble = (double)w;
+    double hDouble = (double)h;
+
     // TODO: Change to include height
-    const ET perimeter = ET(2) * ET(w) + ET(2) * ET(h);
-    const ET widthMultiplier = ET(w) / ET(2);
-    const ET heightMultiplier = ET(h) / ET(2);
+    const IT perimeter = 2.0 * wDouble + 2.0 * hDouble;
+    const IT widthMultiplier = wDouble / 2;
+    const IT heightMultiplier = hDouble / 2;
 
     std::vector<Point> points(n);
 
@@ -62,34 +67,34 @@ void testcase() {
 //        lp.set_u(i, true, 1);
     }
 
+    int constraints = 0;
+
     for (int a = 0; a < n; a++) {
-        for (int b = 0; b < n; b++) {
-            if (a == b) {
-                continue;
-            }
+        for (int b = a + 1; b < n; b++) {
             // Compare, see what we need to constrain (what may overlap)
-            int dx = abs(points[a].x - points[b].x);
-            int dy = abs(points[a].y - points[b].y);
+            const int dx = abs(points[a].x - points[b].x);
+            const int dy = abs(points[a].y - points[b].y);
 
 //            std::cout << "dx " << dx << ", dy " << dy << " ";
 
-            if ((ET(dx) / ET(w)) > (ET(dy) / ET(h))) {
+            if (((double)dx / wDouble) > ((double)dy / hDouble)) {
                 // constrain width
-                lp.set_a(a, (a * n) + b, widthMultiplier);
-                lp.set_a(b, (a * n) + b, widthMultiplier);
-                lp.set_b((a * n) + b, dx);
+                lp.set_a(a, constraints, widthMultiplier);
+                lp.set_a(b, constraints, widthMultiplier);
+                lp.set_b(constraints, dx);
 //                std::cout << "w ";
             } else {
                 // constrain height
-                lp.set_a(a, (a * n) + b, heightMultiplier);
-                lp.set_a(b, (a * n) + b, heightMultiplier);
-                lp.set_b((a * n) + b, dy);
+                lp.set_a(a, constraints, heightMultiplier);
+                lp.set_a(b, constraints, heightMultiplier);
+                lp.set_b(constraints, dy);
 //                std::cout << "h ";
             }
+            constraints++;
         }
     }
 
-    int entriesSoFar = n*n;
+    const int entriesSoFar = constraints;
 
     std::vector<Point> old_x(m);
 
@@ -101,128 +106,57 @@ void testcase() {
 
     } // ignore
 
-    // for each point calculate where we can not go
-    std::sort(old_x.begin(), old_x.end(), cmp_x);
-    for (int a = 0; a < n; a++) {
-        auto point = points[a];
-        int minX, maxX, minY, maxY;
-        // minX
+    for (int i = 0; i < n; i++) {
+        // find lower and higher x/y per point, constrain...
+        auto point = &points[i];
 
-    }
+        const int row = entriesSoFar + i;
+        IT mm = IT(INT_MAX);
+        bool width = false;
 
-    std::sort(old_x.begin(), old_x.end(), cmp_x);
-    for (int a = 0; a < n; a++) {
-        // sorted by x ?
-        auto point = points[a];
+        for (int a = 0; a < m; a++) {
+            auto old = &old_x[a];
+//            std::cout << "Point " << a << std::endl;
+            const IT dxl = abs(point->x - old->x) / wDouble;
+            const IT dyl = abs(point->y - old->y) / hDouble;
 
-        auto upper = std::lower_bound(old_x.cbegin(), old_x.cend(), point, cmp_x);
-        if (upper != old_x.cbegin()) {
-            auto lower = upper - 1;
-//            std::cout << "Found lower bound " << lower->x << " for " << point.x << " " << a << std::endl;
-            const int dxl = abs(point.x - lower->x);
-//            std::cout << "Setting " << widthMultiplier << " " << dxl << std::endl;
-            const int dyl = abs(point.y - lower->y);
-            if ((ET(dxl) / ET(w)) > (ET(dyl) / ET(h))) {
-                lp.set_a(a, entriesSoFar, widthMultiplier);
-                lp.set_b(entriesSoFar, dxl - widthMultiplier);
-            }
-//            } else {
-//                lp.set_a(a, entriesSoFar, heightMultiplier);
-//                lp.set_b(entriesSoFar, dyl - heightMultiplier);
-//            }
-            entriesSoFar++;
-        }
+            // if higher
+//            const int xN = point.x - old.x > 0 ? 1 : -1;
+//            const int yN = point.y - old.y > 0 ? 1 : -1;
 
-        if (upper == old_x.cend()) {
-            continue;
-        }
-//        std::cout << "Found upper bound " << upper->x << " for " << point.x << " " << a << std::endl;
-        const int dxu = abs(upper->x - point.x);
-//        std::cout << "Setting " << widthMultiplier << " " << dxu << std::endl;
-        const int dyu = abs(point.y - upper->y);
-        if ((ET(dxu) / ET(w)) > (ET(dyu) / ET(h))) {
-            lp.set_a(a, entriesSoFar, widthMultiplier);
-            lp.set_b(entriesSoFar, dxu - widthMultiplier);
-        }
-//        } else {
-//            lp.set_a(a, entriesSoFar, heightMultiplier);
-//            lp.set_b(entriesSoFar, dyu - heightMultiplier);
-//        }
-        entriesSoFar++;
-    }
-
-    std::sort(old_x.begin(), old_x.end(), cmp_y);
-    for (int a = 0; a < n; a++) {
-        // sorted by x ?
-        auto point = points[a];
-
-        auto upper = std::lower_bound(old_x.cbegin(), old_x.cend(), point, cmp_y);
-        if (upper != old_x.cbegin()) {
-            auto lower = upper - 1;
-//            std::cout << "Found y" << std::endl;
-//            std::cout << "Found lower bound " << lower->x << " for " << point.x << " " << a << std::endl;
-            const int dxl = abs(point.x - lower->x);
-            const int dyl = point.y - upper->y;
-            if ((ET(dxl) / ET(w)) < (ET(dyl) / ET(h))) {
-//                lp.set_a(a, entriesSoFar, widthMultiplier);
-//                lp.set_b(entriesSoFar, dxl - widthMultiplier);
-//            } else {
-                lp.set_a(a, entriesSoFar, heightMultiplier);
-                lp.set_b(entriesSoFar, dyl - heightMultiplier);
-            }
-            entriesSoFar++;
-        }
-
-        if (upper == old_x.cend()) {
-            continue;
-        }
-//        std::cout << "Found y L" << std::endl;
-
-//        std::cout << "Found upper bound " << upper->x << " for " << point.x << " " << a << std::endl;
-        const int dxu = abs(point.x - upper->x);
-        const int dyu = upper->y - point.y;
-        if ((ET(dxu) / ET(w)) < (ET(dyu) / ET(h))) {
-//            lp.set_a(a, entriesSoFar, widthMultiplier);
-//            lp.set_b(entriesSoFar, dxu - widthMultiplier);
-//        } else {
-            lp.set_a(a, entriesSoFar, heightMultiplier);
-            lp.set_b(entriesSoFar, dyu - heightMultiplier);
-        }
-        entriesSoFar++;
-    }
-
-//    for (int i = 0; i < n; i++) {
-//        // find lower and higher x/y per point, constrain...
-//        auto point = points[i];
-//
-//        for (int a = 0; a < m; a++) {
-//            auto old = old_x[a];
-////            std::cout << "Point " << a << std::endl;
-//            const int dxl = abs(point.x - old.x);
-//            const int dyl = abs(point.y - old.y);
-//
-//            const int row = entriesSoFar + (i * m) + a;
-//
-//            // if higher
-////            const int xN = point.x - old.x > 0 ? 1 : -1;
-////            const int yN = point.y - old.y > 0 ? 1 : -1;
-//
-//            if ((ET(dxl) / ET(w)) > (ET(dyl) / ET(h))) {
+            if (dxl > dyl) {
+                mm = std::min(mm, dxl);
+                width = true;
 //                // constrain width
 ////                int up = dxl < 0 ? -1 * dxl : dxl;
 //
 ////                std::cout << " Constraining extra " << i << " to not cause x to be " << (xN == 1 ? "less" : "more") << " than " << up << " - " << widthMultiplier << std::endl;
 //                lp.set_a(i, row, widthMultiplier);
 //                lp.set_b(row, dxl - widthMultiplier);
-//            } else {
+//
+//
+            } else {
+                mm = std::min(mm, dyl);
+                width = false;
 ////                int up = dyl < 0 ? -1 * dyl : dyl;
 //                // constrain height
 //                lp.set_a(i, row, heightMultiplier);
 //                lp.set_b(row, dyl - heightMultiplier);
-//            }
-//        }
-//
-//    }
+            }
+        }
+        if (width) {
+            // w
+            lp.set_a(i, row, widthMultiplier);
+            lp.set_b(row, (mm * w) - widthMultiplier);
+        } else {
+            // h
+            lp.set_a(i, row, heightMultiplier);
+            lp.set_b(row, (mm * h) - heightMultiplier);
+        }
+
+    }
+//    std::cerr << "Calc" << std::endl;
+    CGAL::print_linear_program(std::cerr, lp);
 
     Solution s = CGAL::solve_linear_program(lp, ET());
 //    std::cout << s <<std::endl;
@@ -230,6 +164,7 @@ void testcase() {
 }
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
     int t; std::cin >> t;
     while(t-- > 0) {
         testcase();

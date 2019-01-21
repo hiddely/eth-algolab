@@ -10,13 +10,9 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <algorithm>
 // BGL includes
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/cycle_canceling.hpp>
-#include <boost/graph/push_relabel_max_flow.hpp>
-#include <boost/graph/successive_shortest_path_nonnegative_weights.hpp>
-#include <boost/graph/find_flow_cost.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
 
 // BGL Graph definitions
 // =====================
@@ -44,12 +40,7 @@ public:
     void addEdge(int u, int v, long w) {
         Edge e;
         boost::tie(e, boost::tuples::ignore) = boost::add_edge(u, v, G);
-//        boost::tie(rev_e, boost::tuples::ignore) = boost::add_edge(v, u, G);
         weightmap[e] = w; // new!
-//        capacitymap[rev_e] = 0;
-//        weightmap[rev_e] = -w; // new
-//        revedgemap[e] = rev_e;
-//        revedgemap[rev_e] = e;
     }
 };
 
@@ -60,111 +51,46 @@ void testcase(int t) {
 
     Graph G(N);
     EdgeWeightMap weightmap = boost::get(boost::edge_weight, G);
-//    ReverseEdgeMap revedgemap = boost::get(boost::edge_reverse, G);
-//    ResidualCapacityMap rescapacitymap = boost::get(boost::edge_residual_capacity, G);
     EdgeAdder eaG(G, weightmap);
 
-    const int Max = INT_MAX;
-//    std::cout << Max << std::endl;
+//    std::vector<bool> toke(N, true);
 
     for (int i = 0; i < M; i++) {
         int u, v, p;
         std::cin >> u >> v >> p;
-        eaG.addEdge(u, v, Max - p);
-//        if (t == 18) {
-//            std::cerr << i << " Edge " << u << " " << v << std::endl;
-//        }
-//        if (u > N - 1 || v > N - 1) {
-//            std::cerr << "Out of bonuds" << std::endl;
-//            abort();
-//        }
+
+//        toke[u] = false;
+
+        eaG.addEdge(u, v, p);
     }
 
-//    if (t != 18) {
-//        return;
-//    }
+    std::vector<std::vector<long> > map(K + 1, std::vector<long> (N, -1) );
+    Vertex start = 0;
+    map[0][start] = 0;
+    for (int i = 0; i < K; i++) {
+        for (int r = 0; r < N; r++) {
+            if (map[i][r] != -1) {
+                // find out edges
+                OutEdgeIt e, eend;
+                boost::tie(e, eend) = boost::out_edges(r, G);
+                if (e == eend) {
+                    // we have a toke
+                    boost::tie(e, eend) = boost::out_edges(start, G);
+                }
+                for (; e != eend; e++) {
+                    Vertex t = boost::target(*e, G);
+                    map[i + 1][t] = std::max(map[i + 1][t], map[i][r] + weightmap[*e]);
+//                    std::cerr << i << ", " << r << ": Visiting edge " << r << " -> " << t << ", " << map[i + 1][t] << std::endl;
 
-    const Vertex start = 0;
-
-    assert(N == boost::num_vertices(G));
-    std::vector<Vertex> predmap(N);	// We will use this vector as an Exterior Property Map: Vertex -> Dijkstra Predecessor
-    std::vector<long> distmap(N);		// We will use this vector as an Exterior Property Map: Vertex -> Distance to source
-    boost::dijkstra_shortest_paths(G, start, // We MUST provide at least one of the two maps
-                                   boost::predecessor_map(boost::make_iterator_property_map(predmap.begin(), boost::get(boost::vertex_index, G))).	// predecessor map as Named Parameter
-                                           distance_map(boost::make_iterator_property_map(distmap.begin(), boost::get(boost::vertex_index, G))));	// distance map as Named Parameter
-
-    std::queue<Vertex> toVisit;
-    std::vector<bool> visited(N);
-
-    visited[start] = true;
-    toVisit.push(start);
-    Vertex f;
-    bool found = false;
-    std::vector<int> depth(N);
-    depth[start] = 0;
-    while (!toVisit.empty()) {
-        Vertex n = toVisit.front();
-        toVisit.pop();
-
-//        std::cerr << n << ": " << (depth[n] * Max) - distmap[n] << std::endl;
-
-        if ((((long)depth[n]) * Max) - distmap[n] >= X) {
-            // found!
-            f = n;
-            found = true;
-            break;
-        }
-
-        OutEdgeIt e, eend;
-        for (boost::tie(e, eend) = boost::out_edges(n, G); e != eend; e++) {
-            Vertex t = boost::target(*e, G);
-//            if (visited[t] && t != start) {
-//                // Cycle!
-//                std::cerr << "Cycle " << std::endl;
-//                abort();
-//            }
-            if (!visited[t]) {
-                //
-                depth[t] = depth[n] + 1;
-                toVisit.push(t);
-                visited[t] = true;
+                    if (map[i + 1][t] >= X) {
+                        std::cout << i + 1 << std::endl;
+                        return;
+                    }
+                }
             }
         }
     }
-
-    if (!found) {
-        std::cout << "Impossible" << std::endl;
-
-//        for (int i = 0; i < N; i++) {
-//            std::cerr << i << ": " << distmap[i] << " " << depth[i] << " " << (((long)depth[i]) * Max) - ((long)distmap[i]) << std::endl;
-//        }
-    } else {
-        // find predecessor
-//        Vertex pre = f;
-////        std::cerr << pre << std::endl;
-//        int steps = 0;
-//        while (pre != start) {
-//            pre = predmap[pre];
-//            steps++;
-//        }
-        std::cout << depth[f] << std::endl;
-    }
-
-//    bool found = false;
-//    for (int i = 0; i < N; i++) {
-//        if (isEnd[i]) {
-//            // k moves
-//            if (points[i] >= X) {
-//                found = true;
-//                break;
-//            }
-//        }
-//    }
-//    if (found) {
-//        std::cout << K << std::endl;
-//    } else {
-//        std::cout << "Impossible" << std::endl;
-//    }
+    std::cout << "Impossible" << std::endl;
 }
 
 int main() {

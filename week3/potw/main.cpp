@@ -4,77 +4,76 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <map>
+#include <set>
+#include <climits>
 
-//int maxNum(int attackers, int str, int a, int b, int sum, int n, std::vector<int> &defense) {
-//    if (b > a) {
+typedef std::pair<int, int> Option;
+
+//int calc(int a, int b, int sum, int numAttack, int k, int n, std::vector<int> defense) {
+//    if (numAttack == 0) {
 //        return 0;
 //    }
-//    if (at >= n) {
-//        return 0;
+//    if (a == n || b == n + 1) {
+//        return -100000000;
 //    }
-//    if (sum == str) {
-//        return b - a + 1 + maxNum(attackers--);
+//    std::pair<std::pair<std::pair<int, int>, int>, int> key
+//        = std::pair<std::pair<std::pair<int, int>, int>, int>(std::pair<std::pair<int, int>, int>(std::pair<int, int>(a, b), sum), numAttack);
+//    if (DP[key].val != -1) {
+//        return DP[key].val;
 //    }
-//    int incA = maxNum(attackers)
+//    if (sum < k) {
+//        // just increment the window
+////        std::cerr << "Increment " << defense[b] << " " << sum + defense[b] << std::endl;
+//        return calc(a, b + 1, sum + defense[b], numAttack, k, n, defense);
+//    }
+//    if (sum > k) {
+//        // decrement the window
+////        std::cerr << "decrement " << defense[a] << " " << sum - defense[a] << std::endl;
+//        return calc(a + 1, b, sum - defense[a], numAttack, k, n, defense);
+//    }
+//    // sum == k
+////    std::cerr << "Match " << a << " " << b << std::endl;
+//    int apply = (b - a) + calc(b, b + 1, defense[b], numAttack - 1, k, n, defense);
+//    int no = calc(a + 1, b, sum - defense[a], numAttack, k, n, defense);
+//    int val = std::max(apply, no);
+//    DP[key].val = val;
+//    return val;
 //}
 
-struct Option {
-    int a;
-    int b;
-
-    Option(int aa, int bb): a(aa), b(bb) {};
-    Option() = default;
-
-    bool overlaps(Option &next) {
-        return this->b >= next.a;
-    }
-
-    int distance() {
-        return this->b - this->a + 1;
-    }
+struct NotZero {
+    int val = -1;
+    NotZero() = default;
 };
 
-std::vector<std::vector<int>> lookup;
+typedef std::vector<NotZero> P;
+typedef std::vector<P> PP;
 
-int selectMax(int i, int n, int attackers, std::vector<Option> &options) {
-    if (i >= n) {
-        return 0;
-    }
+PP DP;
+
+int calc(int i, int attackers, int n, std::vector<Option> &options) {
     if (attackers == 0) {
-        return 0; // 0 left
+//        std::cerr << "Done " << i << std::endl;
+        return 0; // finito
     }
-    Option &cur = options[i];
-    if (i == n - 1) {
-        return cur.distance();
+    if (i >= n) {
+        return INT_MIN;
     }
-    if (lookup[i][attackers] != -1) {
-        return lookup[i][attackers];
+    if (DP[i][attackers].val != -1) {
+        return DP[i][attackers].val;
     }
-    int max = 0; // choosing this option
-    int nonOverlappingIndex = n;
-    for (int a = i + 1; a < n; a++ ){
-        Option &other = options[a];
-        if (cur.overlaps(other)) {
-//            std::cout << " i " << i << " overlaps " << a << std::endl;
-//            max = std::max(selectMax(a, n, attackers, options), max); // option of choosing the other one
-        } else {
-//            std::cout << "nonOverlap " << a << std::endl;
-            nonOverlappingIndex = a;
-            break;
-        }
+    auto iter = options[i];
+    int pick = INT_MIN;
+    if (iter != Option(0, 0)) {
+        pick = (iter.second - iter.first) + calc(iter.second, attackers - 1, n, options);
+//        std::cerr << i << " OptionPot " << iter.first << " " << iter.second << ", pick: " << pick << " dont " << std::endl;
     }
-    // choosing, this skipping the rest
-    int choosethis = cur.distance() + selectMax(nonOverlappingIndex, n, attackers - 1, options);
-    int skipthis = selectMax(i + 1, n, attackers, options);
-    int choice = std::max(std::max(choosethis, max), skipthis);
-
-//    std::cout << "i " << i << " MAx " << max << " choose " << choosethis << " index " << nonOverlappingIndex << std::endl;
-
-    lookup[i][attackers] = choice;
-
-    return choice;
+    int dontpick = calc(i + 1, attackers, n, options);
+    int val = std::max(pick, dontpick);
+    DP[i][attackers].val = val;
+    return val;
 }
-
 
 void testcase() {
     int numDefense; std::cin >> numDefense;
@@ -85,70 +84,43 @@ void testcase() {
         std::cin >> defenseValues[i];
     }
 
+    DP = PP(numDefense, P(numAttack + 1));
 
-    int a = 0; int b = 0; int sum = 0;
-    std::vector<Option> potentialPositions;
-    while (a < numDefense && (b < numDefense || sum > attackStrength)) {
-        if (b < numDefense && sum <= attackStrength) {
+    int sum = 0;
+    int a = 0; int b = 0;
+    std::vector<Option> options(numDefense);
+    while (b <= numDefense && a < numDefense) {
+//        std::cerr << "Build " << a << " " << b << std::endl;
+        if (sum < attackStrength) {
+            // incr
             sum += defenseValues[b];
             b++;
-//            std::cout << "Increasing B " << b << ", sum: " << sum << std::endl;
-        }
-        if (sum > attackStrength) {
-            // Too strong
+        } else if (sum > attackStrength) {
+            // decr
             sum -= defenseValues[a];
             a++;
-//            std::cout << "Increasing A " << a << ", sum: " << sum << std::endl;
-        }
-        if (sum == attackStrength) {
-            // We have found one
-//            std::cout << "Found one " << a << " " << b - 1 << std::endl;
-            potentialPositions.push_back(Option(a, b - 1));
+        } else {
+            // sum == attackStrength
+            // add as option
+//            std::cerr << "Option " << a << " " << b << std::endl;
+            options[a] = Option(a, b);
+            sum -= defenseValues[a];
+            a++;
         }
     }
 
-//    for
+//    DP = T();
 
-
-    int n = potentialPositions.size();
-
-//    for(int i = 0; i < n; i++) {
-//        std::cout << potentialPositions[i].a << " " << potentialPositions[i].b << std::endl;
-//    }
-
-    if (n < numAttack) {
+    int res = calc(0, numAttack, numDefense, options);
+    if (res < 0) {
         std::cout << "fail" << std::endl;
-        return;
+    } else {
+        std::cout << res << std::endl;
     }
-//    std::cout << n << std::endl;
-    lookup = std::vector<std::vector<int>>(n, std::vector<int>(numAttack + 1, -1));
-
-    int kewl = selectMax(0, n, numAttack, potentialPositions);
-
-    bool couldPlaceAllAttackers = false;
-    for (int i = 0; i < n; i++) {
-        if (lookup[i][1] != -1) {
-            couldPlaceAllAttackers = true;
-        }
-    }
-
-    if (!couldPlaceAllAttackers) {
-        std::cout << "fail" << std::endl;
-        return;
-    }
-
-//    for (int i = 0; i < n; i++) {
-//        for (int a = 0; a < numAttack + 1; a++) {
-//            std::cout << lookup[i][a] << " ";
-//        }
-//        std::cout << std::endl;
-//    }
-//    std::cout << std::endl;
-
-    std::cout << kewl << std::endl;
 }
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
     int t; std::cin >> t;
     for (int a = 0; a < t; a++) {
         testcase();
