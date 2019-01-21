@@ -5,22 +5,36 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <stack>
 #include <map>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
+#include <CGAL/Triangulation_vertex_base_with_info_2.h>
 
 #include <boost/pending/disjoint_sets.hpp>
 
+typedef std::pair<bool, int> Data;
+
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef CGAL::Delaunay_triangulation_2<K>  Triangulation;
+typedef CGAL::Triangulation_face_base_2<K> Vb;
+typedef CGAL::Triangulation_vertex_base_with_info_2<Data,K> Fb;
+typedef CGAL::Triangulation_data_structure_2<Fb, Vb> Tds;
+typedef CGAL::Delaunay_triangulation_2<K, Tds>  Triangulation;
 typedef Triangulation::Edge_iterator  Edge_iterator;
 typedef Triangulation::Edge Edge;
 typedef Triangulation::Vertex_handle Vertex_handle;
 typedef K::Point_2 Point;
 
+bool has_interference(Triangulation const & trg, K::FT const & rr)
+{
+    for (auto e = trg.finite_edges_begin(); e != trg.finite_edges_end(); ++e)
+        if (trg.segment(*e).squared_length() <= rr) return true;
+        return false;
+}
+
 void testcase() {
-    int n, m, r;
+    int n, m; long r;
     std::cin >> n >> m >> r;
 
     std::vector<Point> pts(n);
@@ -37,113 +51,80 @@ void testcase() {
 
     K::FT radius = K::FT(r * r);
 
-    std::queue<Vertex_handle> toVisit;
-    std::map<Vertex_handle, bool> color;
-    std::map<Vertex_handle, bool> visited;
+    std::stack<Vertex_handle> toVisit;
+
+    Triangulation t0, t1;
+
+    int componentCount = 1;
 
     for (auto fiter = t.finite_vertices_begin(); fiter != t.finite_vertices_end(); fiter++) {
-        toVisit.push(fiter);
-        visited[fiter] = true;
+        fiter->info() = { false, 0 };
+    }
 
-        while (!toVisit.empty()) {
-            Vertex_handle n = toVisit.front();
+    bool interference = false;
+    for (auto fiter = t.finite_vertices_begin(); fiter != t.finite_vertices_end(); fiter++) {
+        if (fiter->info().second != 0) {
+            continue;
+        }
+        toVisit.push(fiter);
+        componentCount++;
+        fiter->info() = { false, componentCount };
+
+        while (!toVisit.empty() && !interference) {
+            Vertex_handle n = toVisit.top();
             toVisit.pop();
 
 //        std::cerr << "Vertex " << n->point() << std::endl;
 
-            Triangulation::Edge_circulator c = t.incident_edges(n);
+            Triangulation::Vertex_circulator c = t.incident_vertices(n);
             do {
-                if (!t.is_infinite(c) && t.segment(c).squared_length() <= radius) {
-                    Triangulation::Vertex_handle v1 = c->first->vertex((c->second + 1) % 3);
-                    Triangulation::Vertex_handle v2 = c->first->vertex((c->second + 2) % 3);
-                    Triangulation::Vertex_handle o;
-                    if (v1 == n) {
-                        o = v2;
-                    } else {
-                        o = v1;
-                    }
+                if (!t.is_infinite(c) && CGAL::squared_distance(c->point(), n->point()) <= radius) {
 //            std::cerr << "V " << o->point() << " through edge " <<std::endl;
-                    if (!t.is_infinite(o) && !visited[o]) {
-                        color[o] = !color[n];
+                    if (c->info().second != 0 && c->info().first == n->info().first) {
+                        interference = true;
+                        break;
+                    }
+                    if (c->info().second == 0) {
+                        c->info() = { !n->info().first, componentCount };
 //                std::cerr << "Assiging color " << color[o] << " to " << o->point() << std::endl;
-                        toVisit.push(o);
-                        visited[o] = true;
+                        toVisit.push(c);
                     }
                 }
-            } while (++c != t.incident_edges(n));
+            } while (++c != t.incident_vertices(n));
+
+            if (n->info().first) {
+                t0.insert(n->point());
+            } else {
+                t1.insert(n->point());
+            }
         }
     }
 
+    interference = interference || has_interference(t0, radius) || has_interference(t1, radius);
 
     // All vertices have a color, deterministically
-    bool interference = false;
-    for (auto iter = t.finite_edges_begin(); iter != t.finite_edges_end(); iter++) {
-        Triangulation::Vertex_handle v1 = iter->first->vertex((iter->second + 1) % 3);
-        Triangulation::Vertex_handle v2 = iter->first->vertex((iter->second + 2) % 3);
-        if (t.segment(iter).squared_length() <= radius && color[v1] == color[v2]) {
-//            std::cerr << "Adding " << t.segment(iter) << std::endl;
-//            std::cerr << v1->point() << " and " << v2->point() << " are interfereing " << std::endl;
-            interference = true;
-            break;
-        }
-    }
-
-    // Construct the MST
-    std::map<Vertex_handle, int> rank_map;
-    std::map<Vertex_handle, Vertex_handle> parent_map;
-    boost::associative_property_map< std::map<Vertex_handle, int> >
-            rank(rank_map);
-    boost::associative_property_map< std::map<Vertex_handle, Vertex_handle> >
-            parent(parent_map);
-
-    boost::disjoint_sets<boost::associative_property_map< std::map<Vertex_handle, int> >,
-            boost::associative_property_map< std::map<Vertex_handle, Vertex_handle> > > dset(rank, parent);
-
-    for (auto iter = t.finite_vertices_begin(); iter != t.finite_vertices_end(); iter++) {
-        // check that its neighbors are sufficiently far from each other
-        dset.make_set(iter);
-    }
-
-    std::vector<Edge> edges;
-    for (auto iter = t.finite_edges_begin(); iter != t.finite_edges_end(); iter++) {
-        if (t.segment(iter).squared_length() <= radius) {
-//            std::cerr << "Adding " << t.segment(iter) << std::endl;
-            edges.push_back(*iter);
-        }
-    }
-    std::sort(edges.begin(), edges.end(), [t](const Edge &e1, const Edge &e2) {
-        return t.segment(e1).squared_length() < t.segment(e2).squared_length();
-    });
-
-//    std::cerr << "Out " << std::endl;
-
-    for (auto iter = edges.begin(); iter != edges.end(); iter++) {
-        Vertex_handle u = iter->first->vertex((iter->second + 1) % 3);
-        Vertex_handle v = iter->first->vertex((iter->second + 2) % 3);
-        Vertex_handle su = dset.find_set(u);
-        Vertex_handle sv = dset.find_set(v);
-        if (su != sv) {
-//            std::cerr << u->point() << " " << v->point() << ", Uniting " << su->point() << " " << sv->point() << std::endl;
-            dset.union_set(su, sv);
-        }
-    }
+//    for (auto iter = t.finite_edges_begin(); iter != t.finite_edges_end(); iter++) {
+//        Triangulation::Vertex_handle v1 = iter->first->vertex((iter->second + 1) % 3);
+//        Triangulation::Vertex_handle v2 = iter->first->vertex((iter->second + 2) % 3);
+//        if (t.segment(iter).squared_length() <= radius && color[v1] == color[v2]) {
+////            std::cerr << "Adding " << t.segment(iter) << std::endl;
+////            std::cerr << v1->point() << " and " << v2->point() << " are interfereing " << std::endl;
+//            interference = true;
+//            break;
+//        }
+//    }
         // read the input
     for (int i = 0; i < m; i++) {
         int ax, ay, bx, by;
         std::cin >> ax >> ay >> bx >> by;
-        Point a(ax, ay);
-        Point b(bx, by);
 
         if (interference) {
             std::cout << "n";
             continue;
         }
 
-        // determine closest vertices
-        Vertex_handle va = t.nearest_vertex(a);
-        Vertex_handle vb = t.nearest_vertex(b);
-        Vertex_handle sa = dset.find_set(va);
-        Vertex_handle sb = dset.find_set(vb);
+        Point a(ax, ay);
+        Point b(bx, by);
 //        if (interference[va] || interference[vb]) {
 //            std::cerr << va->point() << " " << vb->point() << " " << interference[va] << " " << interference[vb] << std::endl;
 //            std::cout << "n";
@@ -153,10 +134,19 @@ void testcase() {
             std::cout << "y";
             continue;
         }
+
+
+        // determine closest vertices
+        Vertex_handle va = t.nearest_vertex(a);
+        Vertex_handle vb = t.nearest_vertex(b);
+        int sa = va->info().second;
+        int sb = vb->info().second;
+
 //        std::cerr << "Nearest " << va->point() << " " << vb->point() << std::endl;
         if (CGAL::squared_distance(a, va->point()) > radius || CGAL::squared_distance(b, vb->point()) > radius) {
             // err
 //            std::cerr << "Too far!" << std::endl;
+//std::cerr << (CGAL::squared_distance(a, va->point()) > radius) << std::endl;
             std::cout << "n";
             continue;
         }
