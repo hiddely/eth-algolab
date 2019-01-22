@@ -43,6 +43,8 @@ typedef std::vector<std::vector<Result> > Table;
 
 Table DP;
 
+int n;
+
 //Result KNAP(int i, int curvol, int vol, std::vector<Beverage> &drinks) {
 //    if (curvol >= vol) {
 //        // we are done
@@ -61,18 +63,23 @@ Table DP;
 //    Result pick = KNAP(i, curvol + drinks[i].volume, vol, drinks);
 ////    std::cerr << "pick " << pick.first << " " << pick.second << " " << lastpick << " " << i << std::endl;
 //
-////    int add = 0;
-////    if (DP[i + 1][curvol + drinks[i].volume] == DP[i][curvol + drinks[i].volume]) {
-////        add = 1;
-////    }
 //
+//    int add = i == n - 1 ? 1 : 0;
+//    if (i < n - 1 && DP[i + 1][curvol + drinks[i].volume] == DP[i][curvol + drinks[i].volume]) {
+//        add = 1;
+//    }
 //    Result pickAdd = Result(drinks[i].cost + pick.first, pick.second + add);
+//
 //
 //    Result dontpick = KNAP(i - 1, curvol, vol, drinks);
 //
 //    Result val;
 //    if (pickAdd.first == dontpick.first) {
-//        val = pickAdd; // always pick !!!
+//        if (pickAdd.second > dontpick.second) {
+//            val = pickAdd;
+//        } else {
+//            val = dontpick;
+//        }
 //    } else if (pickAdd.first < dontpick.first) {
 //        val = pickAdd;
 //    } else {
@@ -83,7 +90,7 @@ Table DP;
 //}
 
 void testcase() {
-    int n; int people;
+    int people;
     std::cin >> n >> people;
     std::vector<Beverage> drinks(n);
     for (int i = 0; i < n; i++) {
@@ -135,7 +142,7 @@ void testcase() {
     }
 
     std::cout << map[people - 1][n - 1].first << " " << map[people - 1][n - 1].second << std::endl;
-//
+
 
 //    Result VAL = KNAP(n - 1, 0, people, drinks);
 //

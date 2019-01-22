@@ -1,24 +1,24 @@
-//
-// Created by Hidde Lycklama on 1/20/19.
-//
-
 #include <iostream>
 #include <vector>
+#include <bitset>
 #include <algorithm>
+#include <cassert>
+#include <numeric>
 
-//typedef std::pair<int, int> TeamRB;
-typedef std::pair<int, int> Sum;
-typedef std::vector<Sum> Res;
-
-unsigned int countSetBits(unsigned int n)
-{
-    unsigned int count = 0;
-    while (n)
-    {
-        count += n & 1;
-        n >>= 1;
+void genCombs(int i, std::vector<bool> cur, int sum, int max, int len, std::vector<std::vector<bool> > &output) {
+    if (i == len) {
+        output.push_back(cur);
+        return;
     }
-    return count;
+    if (sum == max) {
+        output.push_back(cur);
+        return;
+    }
+// pick or dont
+// diont
+    genCombs(i + 1, cur, sum, max, len, output);
+    cur[i] = true;
+    genCombs(i + 1, cur, sum + 1, max, len, output);
 }
 
 void testcase() {
@@ -27,87 +27,117 @@ void testcase() {
 
     std::vector<int> skills(n);
     for (int i = 0; i < n; i++) {
-        std::cin >> skills[i];
+        int s; std::cin >> s;
+        skills[i] = s;
     }
 
     const int firstHalf = n / 2;
     const int secondHalf = n - firstHalf;
 
-    Res sumsOne;
-    for (int x = 0; x < 1 << firstHalf; x++) {
-        const int count = countSetBits(x);
-        if (count > k) {
-            continue;
-        }
+    std::vector<std::vector<bool > > combs;
+    std::vector<bool> cur(firstHalf, false);
+    genCombs(0, cur, 0, k, firstHalf, combs);
 
-        std::vector<int> current;
-        for (int i = 0; i < firstHalf; i++) {
-            if (!(x & (1<<i))) {
-                current.push_back(skills[i]);
+    std::vector<std::vector<int> > sums(k + 1); // K, Sum
+    for (int i = 0; i < combs.size(); i++) {
+        int refs = 0;
+        int curOpt = 0;
+        std::vector<int> points;
+        for (int r = 0; r < firstHalf; r++) {
+            if (combs[i][r]) {
+                refs++;
+                curOpt++;
+            } else {
+                points.push_back(curOpt);
+                curOpt++;
             }
         }
-        // First half
-        for (int i = 0; i < 1 << (firstHalf - count); i++) {
-
-            int rSum = 0;
-
-//            std::cerr << std::bitset<32>(i) << std::endl;
-
-            for (int a = 0; a < firstHalf - count; a++) {
-                if (i & (1<<a)) {
-                    rSum += current[a];
-//                    std::cerr << "RA " << skills[a] << " ";
+        for (int s = 0; s < 1 << (firstHalf - refs); s++) {
+            int sum = 0;
+            for (int x = 0; x < (firstHalf - refs); x++) {
+                if (combs[i][points[x]]) { // exclude
+                } else
+                if (s & (1 << x)) {
+                    sum += skills[points[x]]; // red
                 } else {
-//                    std::cerr << "BA " << skills[a] << " ";
-                    rSum -= current[a];
+                    sum -= skills[points[x]]; // blue
                 }
             }
-
-//            std::cerr << i << " " << "Adding sum " << rSum << " " << bSum << " " << count << std::endl;
-            sumsOne.push_back(Sum(rSum, count));
-        }
-    }
-
-    std::sort(sumsOne.begin(), sumsOne.end());
-
-    long options = 0;
-    for (int x = 0; x < 1 << secondHalf; x++) {
-        const int count = countSetBits(x);
-        if (count > k) {
-            continue;
-        }
-
-        std::vector<int> current;
-        for (int i = 0; i < secondHalf; i++) {
-            if (!(x & (1<<i))) {
-                current.push_back(skills[firstHalf + i]);
-            }
-        }
-        // First half
-        for (int i = 0; i < 1 << (secondHalf - count); i++) {
-
-            int bSum = 0;
-
-            for (int a = 0; a < secondHalf - count; a++) {
-                if (i & (1<<a)) {
-                    bSum -= current[a];
-                } else {
-                    bSum += current[a];
-                }
-            }
-
-            auto iter = std::lower_bound(sumsOne.begin(), sumsOne.end(), Sum(bSum, 0));
-            while (iter != sumsOne.end() && iter->first == bSum) {
-                if (iter->second + count <= k) {
-//                    std::cerr << "Found ! " << iter->first << " " << bSum << ", " << iter->second << " " << count << std::endl;
-                    options++;
-                }
-                iter++;
-            }
+            // std::cerr << refs << " " << sum << std::endl;
+            sums[k - refs].push_back(sum);
         }
 
     }
-    std::cout << options << std::endl;
+
+    for (int i = 0; i < k + 1; i++) {
+        std::sort(sums[i].begin(), sums[i].end());
+    }
+
+    if (firstHalf != secondHalf) {
+        combs = std::vector<std::vector<bool> >();
+        std::vector<bool> cur(secondHalf, false);
+        genCombs(0, cur, 0, k, secondHalf, combs);
+    }
+
+
+    // std::cerr << "Sec" << std::endl;
+    // for (int i = 0; i < combs.size(); i++) {
+    // 	  for (int a = 0; a < secondHalf; a ++ ) {
+    // 	       std::cerr << combs[i][a] << " ";
+    // 	  }
+    // 	  std::cerr << std::endl;
+    // }
+    // now for the secondhalf
+    long count = 0;
+    for (int i = 0; i < combs.size(); i++) {
+        int refs = 0;
+        std::vector<int> points;
+        int curPoint = 0;
+        for (int r = 0; r < secondHalf; r++) {
+            if (combs[i][r]) {
+                // std::cerr << 1 << " ";
+                refs++;
+                curPoint++;
+            } else {
+                // std::cerr << 0 << " ";
+                points.push_back(curPoint);
+                curPoint++;
+            }
+        }
+        // std::cerr << std::end ;
+        for (int s = 0; s < 1 << (secondHalf - refs); s++) {
+            int sum = 0;
+            for (int x = 0; x < (secondHalf - refs); x++) {
+                if (combs[i][points[x]]) { // exclude
+                } else
+                if (s & (1 << x)) {
+                    sum -= skills[firstHalf + points[x]]; // red
+                } else {
+                    sum += skills[firstHalf + points[x]]; // blue
+                }
+            }
+
+            for (int r = refs; r <= k; r++) {
+                auto pp = std::equal_range(sums[r].begin(), sums[r].end(), sum);
+                auto diff = std::distance(pp.first, pp.second);
+                if (diff > 0) {
+
+                    // std::cerr << "Found match " << refs << " " << sum << ": " << diff << std::endl;
+                }
+                count += diff;
+            }
+
+
+        }
+
+    }
+    std::cout << count << std::endl;
+    //
+    // for (int s = 0; s < 1 << firstHalf; s++) {
+    // 	  for (int
+    // }
+
+
 }
 
 int main() {
