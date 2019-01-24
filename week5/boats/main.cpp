@@ -1,82 +1,44 @@
 #include <iostream>
 #include <vector>
-#include <set>
-#include <list>
-#include <climits>
-
-struct Boat {
-    int l;
-    int p;
-
-    Boat(int il, int ip): l(il), p(ip) {}
-
-    bool operator < (const Boat &b) const {
-        return this->p < b.p;
-    }
-
-    int minA() const {
-        return p - l;
-    }
-    int maxB() const {
-        return p + l;
-    }
-};
-
-//struct Interval {
-//    int a;
-//    int b;
-//    int boatNum;
-//
-//    Interval(int xa, int xb, int bn): a(xa), b(xb), boatNum(bn) {}
-//
-//    bool operator < (const Interval &i) const {
-//        return this->b < i.b;
-//    }
-//};
-
-//void findSuitabl
+#include <utility>
+#include <map>
+#include <algorithm>
 
 void testcase() {
-    int n; std::cin >> n;
 
-//    std::list<Interval> intervals;
-    std::list<Boat> boats;
+    int n; std::cin >> n;
+    std::vector<std::pair<int, int> > boats(n);
     for (int i = 0; i < n; i++) {
         int l, p;
         std::cin >> l >> p;
-        boats.push_back(Boat(l, p));
+        boats[i] = std::pair<int, int>(p, l);
     }
-
-    boats.sort(); // n log n
-
-
-    int finishTime = INT_MIN;
-    int count = 0;
-    auto it = boats.cbegin();
-    int prev = finishTime;
-    for (; it != boats.cend(); it++) {
-        if (it->p >= finishTime) {
-            // we can lay out it somewhere
-            // Either mostly to the left or next to the previous boat
-            prev = finishTime;
-            finishTime = std::max(it->p, finishTime + it->l);
-            count++;
+    std::sort(boats.begin(), boats.end());
+    int curPos = boats[0].first;
+    int prevPos = boats[0].first;
+    int numBoats = 1;
+    for (int i = 1; i < n; i ++) {
+        // can we lay out this boat, or preferably the next one?
+        //std::cerr << curPos << " choose between " << boats[i].first << " and " << boats[i + 1].first << std::endl;
+        if (boats[i].first < curPos) {
+            // check if this option is better
+            curPos = std::min(curPos, std::max(prevPos + boats[i].second, boats[i].first));
         } else {
-            int n = std::max(it->p, prev + it->l);
-            if (n < finishTime) {
-                finishTime = n;
-            }
+            // lay it out
+            prevPos = curPos;
+            curPos = std::max(curPos + boats[i].second, boats[i].first);
+
+            numBoats++;
         }
     }
-
-    std::cout << count << std::endl;
+    std::cout << numBoats << std::endl;
 }
 
 int main() {
     std::ios_base::sync_with_stdio(false);
     int t; std::cin >> t;
-    while (t > 0) {
+    while(t-- > 0) {
         testcase();
-        t--;
     }
+    return 0;
 }

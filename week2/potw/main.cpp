@@ -1,69 +1,58 @@
-//
-// Created by Hidde Lycklama on 9/24/18.
-//
-
 #include <iostream>
 #include <vector>
-#include <limits>
-#include <algorithm>
-#include <iomanip>
 #include <utility>
+#include <map>
+#include <iomanip>
 
-std::vector<std::vector<double>> lookup;
-std::vector<double> probabilities;
-int days;
-int target;
+typedef std::vector<std::vector<double> > Table;
 
-double prob(int start, int index) {
-    if (start >= target) {
+Table DP;
+
+double calc(int day, int money, int num, int targ, std::vector<double> &probs) {
+    if (money >= targ) {
+        // quit?
         return 1;
     }
-    if (start <= 0) {
-        return 0;
+    if (day == num) {
+        return (double)(money >= targ);
     }
-    if (index == days) {
-        return 0; // Too slow
-    }
-    if (lookup[index][start] != -1) {
-        return lookup[index][start];
+    if (DP[day][money] != -1) {
+        return DP[day][money];
     }
     double max = 0;
-    double p = probabilities[index];
-    for (int i = 0; i <= start; i++) {
-        double win = p * prob(start + i, index + 1);
-        double lose = (1 - p) * prob(start - i, index + 1);
-        double result = win + lose;
-        if (result > max) {
-            max = result;
-        }
+    for (int i = 0; i <= money; i++) {
+        // place bet for i
+        double success = probs[day] * calc(day + 1, money + i, num, targ, probs);
+        double fail = (1 - probs[day]) * calc(day + 1, money - i, num, targ, probs);
+        //std::cerr << day << ": Bet " << i << " " << (success + fail) << ", " << probs[day] << std::endl;
+        max = std::max(max, success + fail);
     }
-    lookup[index][start] = max;
+    DP[day][money] = max;
     return max;
 }
 
-void testcase() {
-    std::cin >> days;
-    int start; std::cin >> start;
-    std::cin >> target;
 
-    probabilities = std::vector<double>(days);
-    for (int i = 0; i < days; i++) {
-        std::cin >> probabilities[i];
+void testcase() {
+
+    int n, k, m;
+    std::cin >> n >> k >> m;
+    std::vector<double> probs(n);
+    for (int i = 0; i < n; i++) {
+        double p; std::cin >> p;
+        probs[i] = p;
     }
 
-    lookup = std::vector<std::vector<double>>(days, std::vector<double>(target, -1));
+    DP = Table(n, std::vector<double>(2 * m + 2, -1));
 
-    double p = prob(start, 0);
-
-    std::cout << p << std::endl; // Replace 3.5 with your desired double
+    std::cout << std::fixed << std::setprecision(5);
+    std::cout << calc(0, k, n, m, probs) << std::endl;
 
 }
 
 int main() {
     std::ios_base::sync_with_stdio(false);
-    std :: cout << std :: fixed << std::setprecision (5);
     int t; std::cin >> t;
-    for (int i = 0; i < t; i++) {
+    while(t-- > 0) {
         testcase();
     }
     return 0;
