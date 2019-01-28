@@ -73,7 +73,6 @@ void testcase() {
             boost::tie(e, s) = boost::add_edge((4 * u + 1), (4 * v + 2), G);
             weightmap[e] = w;
         }
-
 //        std::cerr << "Adding edge " << (4 * u) << " to " << (4 * v + 1) << std::endl;
     }
 
