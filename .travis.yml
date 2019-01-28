@@ -1,2 +1,7 @@
-language: bash
+language: cpp
 script: bash run-all.sh
+before_install:
+- sudo apt-get install -y libcgal-dev
+addons:
+  apt:
+    update: true
