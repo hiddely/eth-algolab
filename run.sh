@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # For colors, add
 export COLOR_PASS=$'\x1b[32m'
 export COLOR_FAIL=$'\x1b[31m'
