@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 # For colors, add
 export COLOR_PASS=$'\x1b[32m'
