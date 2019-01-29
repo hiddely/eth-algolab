@@ -7,7 +7,7 @@ before_install:
   - cd CGAL-4.13
   - cmake .
   - make
-  - make install
+  - sudo make install
   - cd ../
 addons:
   apt:
