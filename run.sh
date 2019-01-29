@@ -22,9 +22,10 @@ executable=${filename%.*}
 compile="g++ $filename -o $executable -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -v -g -O3"
 printf "compiling using $compile "
 compile=$compile" &> comp_out.txt"
-eval ${compile}
+#eval ${compile}
 
-sleep 5
+g++ $filename -o $executable -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -v -g -O3
+#sleep 5
 
 # Check if compilation was successfull
 if [ $? -ne 0 ]; then
