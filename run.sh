@@ -1,8 +1,5 @@
 #!/bin/bash
 
-set -e
-set -x
-
 # For colors, add
 export COLOR_PASS=$'\x1b[32m'
 export COLOR_FAIL=$'\x1b[31m'
@@ -19,13 +16,10 @@ cd $1
 filename="main.cpp"
 executable=${filename%.*}
 
-compile="g++ $filename -o $executable -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -v -g -O3"
+compile="g++ $filename -o $executable -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -g -O3"
 printf "compiling using $compile "
 compile=$compile" > comp_out.txt"
 eval ${compile}
-
-#g++ $filename -o $executable -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -v -g -O3
-#sleep 5
 
 # Check if compilation was successfull
 if [ $? -ne 0 ]; then
@@ -38,8 +32,6 @@ else
                 cat comp_out.txt
         rm comp_out.txt
 fi
-
-ls -al
 
 # Test the file against test cases
 # Check for test cases
