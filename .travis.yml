@@ -1,8 +1,6 @@
 language: cpp
 dist: trusty
 script: bash judge.sh
-before_install:
-- sudo apt-get install -y libcgal-dev
 addons:
   apt:
     update: true
@@ -10,3 +8,4 @@ addons:
       - sourceline: 'ppa:mhier/libboost-latest'
     packages:
       - boost1.67
+      - libcgal-dev
