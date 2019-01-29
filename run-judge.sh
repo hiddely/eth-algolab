@@ -36,8 +36,6 @@ else
         rm comp_out.txt
 fi
 
-ls -al
-
 # Test the file against test cases
 # Check for test cases
 printf "Retrieving test cases...\n"
