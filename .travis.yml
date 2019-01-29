@@ -3,7 +3,7 @@ dist: trusty
 script: bash run-all.sh
 compiler: clang
 before_install:
-- sudo apt-get install -y libcgal-dev
+- sudo apt-get install -y libcgal-dev libboost-all-dev
 addons:
   apt:
     update: true
