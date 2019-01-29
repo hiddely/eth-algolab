@@ -31,6 +31,7 @@ if [ $? -ne 0 ]; then
         exit 1
 else
         printf "\t[ %sCOMPILATION OK%s ]\n" "$COLOR_PASS" "$COLOR_END"
+                cat comp_out.txt
         rm comp_out.txt
 fi
 
