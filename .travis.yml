@@ -6,6 +6,7 @@ addons:
     update: true
     sources:
       - sourceline: 'ppa:mhier/libboost-latest'
+      - sourceline: 'deb http://debian.cgal.org stretch main'
+      - sourceline: 'deb-src http://debian.cgal.org stretch main'
     packages:
-      - boost1.55
       - libcgal-dev
