@@ -8,7 +8,7 @@ for f in */*; do
         # Will not run if no directories are available
         if ! [[ ${f} =~ ^cmake* ]] && ! [[ ${f} =~ ^extra* ]] && ! [[ ${f} =~ ^main.* ]]; then
             echo "[$f] Testing";
-            sh run.sh $f;
+            sh run-judge.sh $f;
         fi
     fi
 done
