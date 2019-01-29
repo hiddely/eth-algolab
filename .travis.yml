@@ -7,5 +7,5 @@ addons:
     sources:
       - sourceline: 'ppa:mhier/libboost-latest'
     packages:
-      - boost1.67
+      - boost1.55
       - libcgal-dev
