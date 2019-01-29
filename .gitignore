@@ -94,3 +94,6 @@ cmake-build-debug/
 *.dSYM/
 *.in.out
 comp_out.txt
+
+my.in
+my2.in
