@@ -87,10 +87,8 @@ void testcase() {
         }
     }
 
-    for (int i = 0; i < )
-
-//    int o = tiles(h - 1, Line(w, 0), w, g);
-//    std::cout << o << std::endl;
+    int o = tiles(h - 1, Line(w, 0), w, g);
+    std::cout << o << std::endl;
 }
 
 int main() {
