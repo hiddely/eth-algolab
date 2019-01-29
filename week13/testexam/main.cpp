@@ -11,7 +11,7 @@
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Delaunay_triangulation_2<K>  Triangulation;
 typedef Triangulation::Edge_iterator  Edge_iterator;
-typedef Triangulation::Point_2  Point;
+typedef K::Point_2  Point;
 
 // choose exact integral type
 #include <CGAL/Gmpq.h>
