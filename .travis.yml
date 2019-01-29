@@ -9,9 +9,8 @@ addons:
     update: true
     sources:
       - sourceline: 'ppa:mhier/libboost-latest'
-      - sourceline: 'deb http://debian.cgal.org stretch main'
-      - sourceline: 'deb-src http://debian.cgal.org stretch main'
+      - sourceline: 'ppa:ubuntu/cgal'
     packages:
     - boost1.67
     - unzip
-    - libmpfr-dev
+    - libmpfr-devow
