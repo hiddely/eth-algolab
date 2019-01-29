@@ -24,6 +24,8 @@ printf "compiling using $compile "
 compile=$compile" &> comp_out.txt"
 eval ${compile}
 
+sleep 5
+
 # Check if compilation was successfull
 if [ $? -ne 0 ]; then
         printf "[ %sERROR%s ]\n" "$COLOR_FAIL" "$COLOR_END"
