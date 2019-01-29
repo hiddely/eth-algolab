@@ -19,12 +19,14 @@ cd $1
 filename="main.cpp"
 executable=${filename%.*}
 
-compile="g++ -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -g -O3 $filename -o $executable"
+compile="g++ -o $executable -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -g -O3 $filename"
 printf "compiling using $compile "
 compile=$compile" &> comp_out.txt"
 eval ${compile}
 
 ls -al
+(cd ../ && ls -al)
+(cd ../../ && ls -al)
 
 # Check if compilation was successfull
 if [ $? -ne 0 ]; then
