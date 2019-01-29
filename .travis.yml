@@ -4,7 +4,7 @@ script: bash judge.sh
 before_install:
   - wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.13.tar.gz
   - tar xzf CGAL-4.13.tar.gz
-  - cd CGAL-4.13
+  - cd cgal-releases-CGAL-4.13
   - cmake .
   - make
 addons:
