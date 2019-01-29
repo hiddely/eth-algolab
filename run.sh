@@ -24,10 +24,6 @@ printf "compiling using $compile "
 compile=$compile" &> comp_out.txt"
 eval ${compile}
 
-ls -al
-(cd ../ && ls -al)
-(cd ../../ && ls -al)
-
 # Check if compilation was successfull
 if [ $? -ne 0 ]; then
         printf "[ %sERROR%s ]\n" "$COLOR_FAIL" "$COLOR_END"
@@ -39,6 +35,8 @@ else
                 cat comp_out.txt
         rm comp_out.txt
 fi
+
+ls -al
 
 # Test the file against test cases
 # Check for test cases
