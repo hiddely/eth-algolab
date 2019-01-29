@@ -1,15 +1,14 @@
 language: cpp
-dist: trusty
+dist: xenial
 script: bash judge.sh
 before_install:
   - sudo apt-get update
-  - sudo apt-get install libcgal-dev=4.13-1ubuntu2
+  - sudo apt-get install libcgal-dev
 addons:
   apt:
     update: true
     sources:
       - sourceline: 'ppa:mhier/libboost-latest'
-      - sourceline: 'ppa:ubuntu/cgal'
     packages:
     - boost1.67
     - unzip
