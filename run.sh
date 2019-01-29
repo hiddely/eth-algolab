@@ -19,7 +19,7 @@ cd $1
 filename="main.cpp"
 executable=${filename%.*}
 
-compile="g++ -o $executable -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -v -g -O3 $filename"
+compile="g++ $filename -o $executable -std=c++11 -lCGAL -lmpfr -lgmp -lCGAL_Core -I /usr/local/opt/boost/include/boost/ -Wall -v -g -O3"
 printf "compiling using $compile "
 compile=$compile" &> comp_out.txt"
 eval ${compile}
