@@ -9,5 +9,3 @@ addons:
     update: true
     sources:
       - sourceline: 'ppa:mhier/libboost-latest'
-    packages:
-    - boost1.67
