@@ -11,5 +11,3 @@ addons:
       - sourceline: 'ppa:mhier/libboost-latest'
     packages:
     - boost1.67
-    - unzip
-    - libmpfr-devow
