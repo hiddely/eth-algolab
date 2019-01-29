@@ -2,7 +2,7 @@ language: cpp
 dist: trusty
 script: bash judge.sh
 before_install:
-- sudo apt-get install -y libcgal-dev libboost-all-dev
+- sudo apt-get install -y libcgal-dev
 addons:
   apt:
     update: true
