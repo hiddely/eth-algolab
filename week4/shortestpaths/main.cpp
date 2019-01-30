@@ -31,7 +31,6 @@ typedef boost::graph_traits<Graph>::vertex_descriptor		Vertex;		// Vertex Descri
 typedef boost::graph_traits<Graph>::edge_iterator		EdgeIt;		// to iterate over all edges
 typedef boost::graph_traits<Graph>::out_edge_iterator		OutEdgeIt;	// to iterate over all outgoing edges of a vertex
 typedef boost::property_map<Graph, boost::edge_weight_t>::type	WeightMap;	// property map to access the interior property edge_weight_t
-#define VISUALIZE 1
 
 int main() {
     std::ios_base::sync_with_stdio(false);
@@ -71,22 +70,6 @@ int main() {
         long dist = distmap[b];
         if (dist != LONG_MAX) {
             std::cout << dist << std::endl;
-#ifdef VISUALIZE
-            Vertex nextC = predmap[b];
-            Vertex c = b;
-            std::vector<std::pair<int, int>> edges;
-            while (nextC != s) {
-                edges.push_back(std::pair<int, int>(nextC, c));
-                c = nextC;
-                nextC = predmap[nextC];
-            }
-            std::cout << edges.size() << " ";
-            for (int i = 0; i < edges.size(); i ++) {
-                std::cout << edges[i].first << " " << edges[i].second << " ";
-            }
-            std::cout << std::endl;
-#endif
-
         } else {
             std::cout << "unreachable" << std::endl;
         }
