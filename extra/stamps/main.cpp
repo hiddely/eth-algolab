@@ -36,28 +36,28 @@ void testcase() {
     std::vector<P> lights(l);
     for (int i = 0; i < l; i++) {
         int x, y; std::cin >> x >> y;
-        Point p(x, y);
+        P p(x, y);
         lights[i] = p;
     }
 
-    Program lp (CGAL::SMALLER, true, 1, true, 4096);
+    Program lp (CGAL::SMALLER, true, 1, true, 4097);
 
     std::vector<P> stamps(s);
     std::vector<int> limits(s);
-    for (int i = 0; i < l; i++) {
+    for (int i = 0; i < s; i++) {
         int x, y, M; std::cin >> x >> y >> M;
         limits[i] = M;
         P p(x, y);
-        lights[i] = p;
+        stamps[i] = p;
 
-        lp.set_c(i, 1); // just set it
+        lp.set_c(i, -1); // just set it
     }
 
     std::vector<S> walls(w);
     for (int i = 0; i < w; i++) {
         int x1, y1, x2, y2; std::cin >> x1 >> y1 >> x2 >> y2;
         P p1(x1, y1), p2(x2, y2);
-        walls[i] = Segment(p1, p2);
+        walls[i] = S(p1, p2);
     }
 
     const int OFFSET_ONE = s;
@@ -65,8 +65,9 @@ void testcase() {
         for (int j = 0; j < l; j++) {
             // no walls?
             K::FT r = CGAL::squared_distance(stamps[i], lights[j]);
-            lp.set_a(j, i, 1 / r);
-            lp.set_a(j, i + OFFSET_ONE, 1 / r);
+            //std::cerr << stamps[i] <<  " " << lights[j] << ": " << r << std::endl;
+            lp.set_a(j, i, ET(1) / r);
+            lp.set_a(j, i + OFFSET_ONE, ET(1) / r);
         }
 
         lp.set_b(i, limits[i]);
@@ -75,14 +76,14 @@ void testcase() {
     }
 
     // solve the program, using ET as the exact type
-    assert(lp.is_nonnegative());
-    Solution sol = CGAL::solve_nonnegative_linear_program(lp, ET());
+//    assert(lp.is_nonnegative());
+    Solution sol = CGAL::solve_linear_program(lp, ET());
     assert(sol.solves_linear_program(lp));
 
     if (sol.status() == CGAL::QP_INFEASIBLE) {
-        std::cout << "yes" << std::endl;
-    } else {
         std::cout << "no" << std::endl;
+    } else {
+        std::cout << "yes" << std::endl;
     }
 
 }
