@@ -33,6 +33,22 @@ void testcase() {
     // read minimum expected return
     int l, s, w; std::cin >> l >> s >> w;
 
+    std::vector<P> lights(l);
+    for (int i = 0; i < l; i++) {
+        int x, y; std::cin >> x >> y;
+        Point p(x, y);
+        lights[i] = p;
+    }
+
+    std::vector<P> stamps(s);
+    std::vector<int> limits(s);
+    for (int i = 0; i < l; i++) {
+        int x, y, M; std::cin >> x >> y >> M;
+        limits[i] = M;
+        Point p(x, y);
+        lights[i] = p;
+    }
+
 
 
     // by default, we have a nonnegative QP with Ax >= b
