@@ -13,9 +13,9 @@
 
 typedef boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS> Traits;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, boost::no_property,
-                    boost::property<boost::edge_capacity_t, long,
-                        boost::property<boost::edge_residual_capacity_t, long,
-                            boost::property<boost::edge_reverse_t, Traits::edge_descriptor > > > > Graph;
+        boost::property<boost::edge_capacity_t, long,
+                boost::property<boost::edge_residual_capacity_t, long,
+                        boost::property<boost::edge_reverse_t, Traits::edge_descriptor > > > > Graph;
 
 typedef boost::property_map<Graph, boost::edge_capacity_t>::type EdgeCapacityMap;
 typedef boost::property_map<Graph, boost::edge_reverse_t>::type ReverseEdgeMap;
@@ -43,7 +43,7 @@ public:
         capacityMap[rev_e] = 0;
     }
 };
-// TODO: Understand
+
 void testcase() {
     int n, m;
     std::cin >> n >> m;
@@ -120,9 +120,9 @@ void testcase() {
         }
     }
 
-    std::cout << chosen.size() << " ";
+    std::cout << chosen.size();
     for (auto iter = chosen.cbegin(); iter != chosen.cend(); iter++) {
-        std::cout << *iter << " ";
+        std::cout << " " << *iter;
     }
     std::cout << std::endl;
 }

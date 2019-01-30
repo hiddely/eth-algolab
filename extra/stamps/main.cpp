@@ -5,9 +5,9 @@
 #include <CGAL/QP_models.h>
 #include <CGAL/QP_functions.h>
 
-#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 
-typedef CGAL::Exact_predicates_exact_constructions_kernel K;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef K::Point_2 P;
 typedef K::Segment_2 S;
 
@@ -40,63 +40,51 @@ void testcase() {
         lights[i] = p;
     }
 
+    Program lp (CGAL::SMALLER, true, 1, true, 4096);
+
     std::vector<P> stamps(s);
     std::vector<int> limits(s);
     for (int i = 0; i < l; i++) {
         int x, y, M; std::cin >> x >> y >> M;
         limits[i] = M;
-        Point p(x, y);
+        P p(x, y);
         lights[i] = p;
+
+        lp.set_c(i, 1); // just set it
     }
 
+    std::vector<S> walls(w);
+    for (int i = 0; i < w; i++) {
+        int x1, y1, x2, y2; std::cin >> x1 >> y1 >> x2 >> y2;
+        P p1(x1, y1), p2(x2, y2);
+        walls[i] = Segment(p1, p2);
+    }
 
+    const int OFFSET_ONE = s;
+    for (int i = 0; i < s; i++) {
+        for (int j = 0; j < l; j++) {
+            // no walls?
+            K::FT r = CGAL::squared_distance(stamps[i], lights[j]);
+            lp.set_a(j, i, 1 / r);
+            lp.set_a(j, i + OFFSET_ONE, 1 / r);
+        }
 
-    // by default, we have a nonnegative QP with Ax >= b
-    Program qp (CGAL::LARGER, true, 0, false, 0);
-
-    // now set the non-default entries:
-    const int sw = 0;
-    const int cs = 1;
-
-    // constraint on expected return: 0.1 sw + 0.51 cs >= rho
-    qp.set_a(sw, 0, ET(1)/10);
-    qp.set_a(cs, 0, ET(51)/100);
-    qp.set_b(    0, rho);
-
-    // strategy constraint: sw + cs = 1
-    qp.set_a(sw, 1, 1);
-    qp.set_a(cs, 1, 1);
-    qp.set_b(    1, 1);
-    qp.set_r(    1, CGAL::EQUAL); // override default >=
-
-    // objective function: 0.09 sw^2 - 0.1 sw cs - 0.1 cs sw + 0.25 cs^2
-    // we need to specify the entries of 2D, on and below the diagonal
-    qp.set_d(sw, sw, ET(18)/100); //  0.09 sw^2
-    qp.set_d(cs, sw, ET(-1)/10); // -0.05 cs sw
-    qp.set_d(cs, cs, ET(1)/2);  //  0.25 cs^2
+        lp.set_b(i, limits[i]);
+        lp.set_b(i + OFFSET_ONE, 1);
+        lp.set_r(i + OFFSET_ONE, CGAL::LARGER);
+    }
 
     // solve the program, using ET as the exact type
-    assert(qp.is_nonnegative());
-    Solution s = CGAL::solve_nonnegative_quadratic_program(qp, ET());
-    assert(s.solves_quadratic_program(qp));
+    assert(lp.is_nonnegative());
+    Solution sol = CGAL::solve_nonnegative_linear_program(lp, ET());
+    assert(sol.solves_linear_program(lp));
 
-    // output
-    if (s.status() == CGAL::QP_INFEASIBLE) {
-        std::cout << "Expected return rate " << rho << " cannot be achieved.\n";
+    if (sol.status() == CGAL::QP_INFEASIBLE) {
+        std::cout << "yes" << std::endl;
     } else {
-        assert (s.status() == CGAL::QP_OPTIMAL);
-        Solution::Variable_value_iterator opt = s.variable_values_begin();
-        ET sw_ratio = opt->numerator() / opt->denominator();
-        ET cs_ratio = (opt+1)->numerator() / (opt+1)->denominator();
-        ET risk = s.objective_value().numerator() / s.objective_value().denominator();
-        double sw_percent = ceil_to_double(100 * *opt);
-        std::cout << "Minimum risk investment strategy:\n"
-                  << sw_ratio << " ~ " << sw_percent << "%" << " Swatch\n"
-                  << cs_ratio << " ~ " << 100-sw_percent << "%" << " CS\n"
-                  << "Risk = " << risk
-                  << " ~ ." << ceil_to_double(100 * s.objective_value())
-                  << "\n";
+        std::cout << "no" << std::endl;
     }
+
 }
 
 int main() {
