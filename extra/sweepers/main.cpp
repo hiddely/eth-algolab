@@ -30,6 +30,7 @@ typedef boost::property_map<Graph, boost::edge_reverse_t>::type       ReverseEdg
 typedef boost::graph_traits<Graph>::vertex_descriptor          Vertex;
 typedef boost::graph_traits<Graph>::edge_descriptor            Edge;
 typedef boost::graph_traits<Graph>::out_edge_iterator  OutEdgeIt; // Iterator
+typedef boost::graph_traits<Graph>::edge_iterator EdgeIt;
 
 // Custom Edge Adder Class, that holds the references
 // to the graph, capacity map, weight map and reverse edge map
@@ -44,7 +45,7 @@ public:
     EdgeAdder(Graph &G, EdgeCapacityMap &capacitymap, EdgeWeightMap &weightmap, ReverseEdgeMap &revedgemap)
             : G(G), capacitymap(capacitymap), weightmap(weightmap), revedgemap(revedgemap) {}
 
-    void addEdge(int u, int v, long c, long w) {
+    Edge addEdge(int u, int v, long c, long w) {
         Edge e, rev_e;
         boost::tie(e, boost::tuples::ignore) = boost::add_edge(u, v, G);
         boost::tie(rev_e, boost::tuples::ignore) = boost::add_edge(v, u, G);
@@ -54,6 +55,7 @@ public:
         weightmap[rev_e] = -w; // new
         revedgemap[e] = rev_e;
         revedgemap[rev_e] = e;
+        return e;
     }
 };
 
@@ -83,25 +85,42 @@ void testcase() {
         eaG.addEdge(OFFSET_ROOM + vs, end, FLOW_MAX, 0);
     }
 
+//    std::vector<std::pair<Edge, Edge> > pairs(m);
+
     for (int i = 0; i < m; i++) {
         int u, v; std::cin >> u >> v;
-        eaG.addEdge(OFFSET_ROOM + u, OFFSET_ROOM + v, 1, 0);
-        eaG.addEdge(OFFSET_ROOM + v, OFFSET_ROOM + u, 1, 0);
+//        std::cerr << "Adding edge " << (OFFSET_ROOM + u) << " " << (OFFSET_ROOM + v ) << std::endl;
+        Edge e1 = eaG.addEdge(OFFSET_ROOM + u, OFFSET_ROOM + v, 1, -1);
+        Edge e2 = eaG.addEdge(OFFSET_ROOM + v, OFFSET_ROOM + u, 1, -1);
+
+//        pairs[i] = std::pair<Edge, Edge>(e1, e2);
     }
 
     int flow1 = boost::edmonds_karp_max_flow(G, start, end);
-//    boost::cycle_canceling(G);
-//    int cost1 = boost::find_flow_cost(G);
+    boost::cycle_canceling(G);
+    int cost1 = boost::find_flow_cost(G);
 
-//    std::cerr << flow1 << " " << std::endl;
+    std::cerr << flow1 << " " << cost1 << std::endl;
 
-    if (flow1 == )
+    EdgeIt ebeg, eend;
+    for (tie(ebeg, eend) = edges(G); ebeg != eend; ++ebeg) {
+//        std::cout << "edge from " << boost::source(*ebeg, G) << " to " << boost::target(*ebeg, G)
+//                  << " runs " << capacitymap[*ebeg] - rescapacitymap[*ebeg]
+//                  << " units of flow (negative for reverse direction)." << std::endl;
+    }
+
+
+    bool empty = true;
+
+
+    std::cout << (empty ? "yes" : "no") << std::endl;
+
 
     // calc cost, we wanna use m edges
 //    if (-cost1 > m * 2 - 2) {
-        std::cout << "yes" << std::endl;
+//        std::cout << "yes" << std::endl;
 //    } else {
-        std::cout << "no" << std::endl;
+//        std::cout << "no" << std::endl;
 //    }
 
 }
