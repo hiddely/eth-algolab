@@ -64,10 +64,23 @@ void testcase() {
     for (int i = 0; i < s; i++) {
         for (int j = 0; j < l; j++) {
             // no walls?
-            K::FT r = CGAL::squared_distance(stamps[i], lights[j]);
-            //std::cerr << stamps[i] <<  " " << lights[j] << ": " << r << std::endl;
-            lp.set_a(j, i, ET(1) / r);
-            lp.set_a(j, i + OFFSET_ONE, ET(1) / r);
+            S ray = S(stamps[i], lights[j]);
+            bool inter = false;
+            for (int k = 0; k < w; k++) {
+                if (CGAL::do_intersect(ray,walls[k])) {
+//                    std::cerr << ray << " and " << walls[k] << " intersect" << std::endl;
+                    inter = true;
+                    break;
+                }
+            }
+
+            if (!inter) {
+                K::FT r = ray.squared_length();
+                //std::cerr << stamps[i] <<  " " << lights[j] << ": " << r << std::endl;
+                lp.set_a(j, i, ET(1) / r);
+                lp.set_a(j, i + OFFSET_ONE, ET(1) / r);
+            }
+
         }
 
         lp.set_b(i, limits[i]);

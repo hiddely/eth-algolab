@@ -156,7 +156,7 @@ void testcase() {
 
     }
 //    std::cerr << "Calc" << std::endl;
-    CGAL::print_linear_program(std::cerr, lp);
+    //CGAL::print_linear_program(std::cerr, lp);
 
     Solution s = CGAL::solve_linear_program(lp, ET());
 //    std::cout << s <<std::endl;
