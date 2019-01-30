@@ -33,44 +33,16 @@ int main() {
             break;
         }
         int d; std::cin >> d;
+        int n; std::cin >> n;
 
-        Program lp(CGAL::SMALLER, false, 0, false, 0);
+        const int R = d;
 
-        for (int a = 0; a < n; a++) {
-            int sum = 0;
-            for (int b = 0; b < d; b++) {
-                int v; std::cin >> v;
-                lp.set_a(b, a, v);
-                sum += v*v;
-            }
-            int mult = std::sqrt(sum);
-            int v; std::cin >> v;
-            lp.set_b(a, v);
-            lp.set_a(d, a, mult);
+        Program
+
+        for (int i = 0; i < n; i++) {
+
         }
 
-        for (int b = 0; b < d; b++) {
-            lp.set_c(d, -1);
-//            lp.set_d(b, b, -2);
-//            lp.set_d(d + b, b, 1);
-//            lp.set_d(d + b, d + b, -2);
-        }
-
-        lp.set_l(d, true, 0);
-
-        Solution s = CGAL::solve_quadratic_program(lp, ET());
-        assert (s.solves_quadratic_program(lp));
-
-//        std::cout << s << std::endl;
-
-        if (s.is_unbounded()) {
-            std::cout << "inf" << std::endl;
-        } else
-        if (!s.is_optimal()) {
-            std::cout << "none" << std::endl;
-        } else {
-            std::cout << std::setprecision(12) << (floor_to_double(-s.objective_value())) << std::endl;
-        }
     }
     return 0;
 }

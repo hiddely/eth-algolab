@@ -60,7 +60,7 @@ for test in testsets/*; do
                 eval ${result}
 
                 # Compute the difference between the given output and the computed one
-                difference="diff $test_in.out $test_out > $test_in.diff"
+                difference="diff -w $test_in.out $test_out > $test_in.diff"
                 eval ${difference}
 
                 # If the file exists and is non-empty
