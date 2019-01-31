@@ -102,49 +102,51 @@ void testcase() {
         drinks[i] = b;
     }
 
-    DP = Table(n, std::vector<Result>(people + 1));
+    DP = Table(n, std::vector<Result>(people, Result(-1, -1)));
 
-    for (int i = 0; i < n; i++) {
-        Beverage *b = &drinks[i];
-        for (int j = 1; j <= people; j++) {
-            long cost = 0;
-            long numBev = 0;
-            if (j - b->volume <= 0) {
-                //
-                cost = b->cost;
-                numBev = 1;
+    std::vector<std::vector<Result > > map(people + 1, std::vector<Result>(n, Result(-1, -1))); // Beverages / volume -> Cost
+
+    for (int v = 0; v < people; v++) {
+        // start building up v
+        for (int i = 0; i < n; i++) {
+            long minCost;
+            long minChoice;
+            if (drinks[i].volume > v) {
+                // add this one
+                minCost = drinks[i].cost;
+                minChoice = 1;
             } else {
-                Result prev = DP[i][j - b->volume];
-                cost = prev.first + b->cost;
-                numBev = prev.second;
-                if (i > 0) {
-                    Result prevLeft = DP[i - 1][j - b->volume];
-                    if (prevLeft == prev) { // we used the prev value... but we have to compare both sides because cost may be the same but we still use ours
-                        numBev = prev.second + 1; // this is the first time we use this
+                Result down = map[v - drinks[i].volume][i];
+                minCost = down.first + drinks[i].cost;
+                minChoice = down.second;
+                if (i > 0 && down == map[v - drinks[i].volume][i - 1] ? 1 : 0) {
+                    minChoice += 1;
+                }
+                // if lower same as prev bev, we havent used this beverage yet
+            }
+//            std::cerr << v << " " << i << ": " << minCost << " " << minChoice << std::endl;
+            if (i > 0) {
+                Result left = map[v][i - 1];
+                if (left.first < minCost) {
+                    minCost = left.first;
+                    minChoice = left.second;
+                } else if (left.first == minCost) {
+                    if (left.second > minChoice) {
+                        minChoice = left.second;
                     }
                 }
             }
-            if (i == 0) {
-                DP[i][j] = Result(cost, numBev);
-            } else if (DP[i - 1][j].first == cost) {
-                DP[i][j] = Result(cost, std::max(numBev, DP[i - 1][j].second));
-            } else if (DP[i - 1][j].first < cost) {
-                DP[i][j] = DP[i - 1][j];
-            } else {
-                DP[i][j] = Result(cost, numBev);
-            }
+
+            map[v][i] = Result(minCost, minChoice);
         }
     }
 
-//    for (int i = 0; i < n; i++) {
-//        std::cerr << i << ": ";
-//        for (int j = 0; j <= people; j++) {
-//            std::cerr << DP[i][j].first << "-" << DP[i][j].second << " ";
-//        }
-//        std::cerr << std::endl;
-//    }
+    std::cout << map[people - 1][n - 1].first << " " << map[people - 1][n - 1].second << std::endl;
 
-    std::cout << DP[n - 1][people].first << " " << DP[n - 1][people].second << std::endl;
+
+//    Result VAL = KNAP(n - 1, 0, people, drinks);
+//
+//    std::cout << VAL.first << " " << VAL.second << std::endl;
 
 }
 
